@@ -1,0 +1,340 @@
+{
+  "version": 2,
+  "width": 768,
+  "height": 512,
+  "facing": "right",
+  "alpha": true,
+  "animations": {
+    "idle": {
+      "label": "站立呼吸",
+      "loop": true,
+      "frames": [
+        {
+          "file": "idle/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            224,
+            56,
+            319,
+            404
+          ]
+        },
+        {
+          "file": "idle/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            242,
+            38,
+            307,
+            422
+          ]
+        },
+        {
+          "file": "idle/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            225,
+            56,
+            312,
+            404
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        0,
+        2
+      ],
+      "durationsMs": [
+        600,
+        350,
+        650,
+        120
+      ],
+      "spritesheet": "idle/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
+    },
+    "walk": {
+      "label": "慢速行走",
+      "loop": true,
+      "frames": [
+        {
+          "file": "walk/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            227,
+            63,
+            329,
+            397
+          ]
+        },
+        {
+          "file": "walk/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            228,
+            78,
+            324,
+            382
+          ]
+        },
+        {
+          "file": "walk/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            213,
+            80,
+            338,
+            380
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        2,
+        1
+      ],
+      "durationsMs": [
+        160,
+        110,
+        160,
+        110
+      ],
+      "spritesheet": "walk/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
+    },
+    "slide": {
+      "label": "地面趴滑",
+      "loop": true,
+      "frames": [
+        {
+          "file": "slide/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            100,
+            133,
+            567,
+            217
+          ]
+        },
+        {
+          "file": "slide/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            94,
+            138,
+            574,
+            212
+          ]
+        },
+        {
+          "file": "slide/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            86,
+            176,
+            576,
+            174
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        0,
+        2
+      ],
+      "durationsMs": [
+        180,
+        140,
+        180,
+        140
+      ],
+      "spritesheet": "slide/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
+    },
+    "swim": {
+      "label": "游泳划水",
+      "loop": true,
+      "frames": [
+        {
+          "file": "swim/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            92,
+            164,
+            584,
+            245
+          ]
+        },
+        {
+          "file": "swim/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            93,
+            175,
+            583,
+            230
+          ]
+        },
+        {
+          "file": "swim/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            71,
+            172,
+            604,
+            232
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        2,
+        1
+      ],
+      "durationsMs": [
+        150,
+        110,
+        170,
+        110
+      ],
+      "spritesheet": "swim/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
+    },
+    "landing": {
+      "label": "跳跃落地",
+      "loop": false,
+      "frames": [
+        {
+          "file": "landing/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            173,
+            36,
+            422,
+            417
+          ]
+        },
+        {
+          "file": "landing/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            185,
+            129,
+            406,
+            331
+          ]
+        },
+        {
+          "file": "landing/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            244,
+            49,
+            352,
+            411
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        2
+      ],
+      "durationsMs": [
+        150,
+        140,
+        300
+      ],
+      "spritesheet": "landing/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
+    }
+  },
+  "texture": "hand-drawn-graphite-pencil",
+  "eyeStyle": "hand-drawn-pencil",
+  "revision": "pencil-eyes-2026-10-24"
+}

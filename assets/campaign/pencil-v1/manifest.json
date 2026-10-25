@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "style": "graphite-pencil",
+  "generationMode": "built-in image_gen",
+  "coordinateSystem": "source pixels, origin top-left; props use center-bottom ground anchor",
+  "backgrounds": [
+    {
+      "id": "bay",
+      "file": "bay-background.png",
+      "width": 1536,
+      "height": 1024,
+      "horizon": 0.72
+    },
+    {
+      "id": "ridge",
+      "file": "ridge-background.png",
+      "width": 1536,
+      "height": 1024,
+      "horizon": 0.72
+    },
+    {
+      "id": "cave",
+      "file": "cave-background.png",
+      "width": 1536,
+      "height": 1024,
+      "horizon": 0.72
+    },
+    {
+      "id": "home",
+      "file": "home-background.png",
+      "width": 1536,
+      "height": 1024,
+      "horizon": 0.72
+    }
+  ],
+  "sprites": [
+    {
+      "id": "home-lighthouse",
+      "label": "归航灯塔与暖光门廊",
+      "rect": {
+        "x": 14,
+        "y": 6,
+        "w": 534,
+        "h": 579
+      },
+      "pivot": {
+        "x": 0.78,
+        "y": 1
+      },
+      "file": "props-atlas.png",
+      "category": "campaign-props",
+      "groundFootY": 0.993091537133
+    },
+    {
+      "id": "envelope",
+      "label": "封口来信",
+      "rect": {
+        "x": 582,
+        "y": 167,
+        "w": 460,
+        "h": 316
+      },
+      "file": "props-atlas.png",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "campaign-props",
+      "groundFootY": 0.987341772152
+    },
+    {
+      "id": "buoy",
+      "label": "旧航道浮标",
+      "rect": {
+        "x": 1157,
+        "y": 38,
+        "w": 308,
+        "h": 575
+      },
+      "file": "props-atlas.png",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "campaign-props"
+    },
+    {
+      "id": "footprints",
+      "label": "岸上的企鹅脚印",
+      "rect": {
+        "x": 38,
+        "y": 782,
+        "w": 440,
+        "h": 97
+      },
+      "file": "props-atlas.png",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "campaign-props",
+      "groundFootY": 0.958762886598
+    },
+    {
+      "id": "cave-arch",
+      "label": "冰洞入口轮廓",
+      "rect": {
+        "x": 491,
+        "y": 590,
+        "w": 615,
+        "h": 417
+      },
+      "file": "props-atlas.png",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "campaign-props"
+    },
+    {
+      "id": "ice-cracks",
+      "label": "冰层裂纹",
+      "rect": {
+        "x": 1106,
+        "y": 637,
+        "w": 389,
+        "h": 357
+      },
+      "file": "props-atlas.png",
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "campaign-props"
+    },
+    {
+      "id": "checkpoint-family-standing",
+      "label": "存档点企鹅一家 · 站立",
+      "file": "checkpoint-family-standing.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1536,
+        "h": 1024
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "groundFootY": 0.9599609375,
+      "category": "checkpoint-characters"
+    },
+    {
+      "id": "checkpoint-family-greeting",
+      "label": "存档点企鹅一家 · 举翅",
+      "file": "checkpoint-family-greeting.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1536,
+        "h": 1024
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "groundFootY": 0.9599609375,
+      "category": "checkpoint-characters"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f2">
+  <meta name="description" content="一只企鹅，一片冰海。滑行、深潜，再跃向更高的地方。">
+  <title>去远方 · To Distant Shores</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='13' y='5' width='38' height='54' rx='22' fill='%23183246'/%3E%3Cellipse cx='32' cy='38' rx='14' ry='18' fill='white'/%3E%3Cpath d='M26 23h12l-6 9z' fill='%23f8ba58'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="去远方首页"><span class="brand-icon">❄</span><span>去远方<small>TO DISTANT SHORES</small></span></a>
+      <nav aria-label="游戏工具"><button id="chapters" class="text-button">章节</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button></nav>
+    </header>
+
+    <section class="game-frame" aria-label="企鹅横版闯关游戏">
+      <canvas id="game" width="1280" height="720" tabindex="0" aria-label="企鹅游戏画面"></canvas>
+      <div class="vignette"></div>
+      <div class="game-top" id="game-hud" hidden>
+        <div class="chapter"><span class="eyebrow" id="chapter-number">1/5</span><strong id="stage">初见冰海</strong><div class="health-box" id="health-box"><span class="sr-only" id="health-value" aria-hidden="true">100 / 100</span><div class="health-fish-track" id="health-meter" role="progressbar" aria-label="生命值：每条小鱼代表20%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"></div></div></div>
+        <div class="route" role="progressbar" aria-label="本章行进进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="route-nest" role="img" aria-label="起点企鹅巢"></span><div class="route-track" aria-hidden="true"><i id="route-fill"></i><b id="route-dot"></b></div><span id="route-end" class="route-flag" role="img" aria-label="终点旗子"></span></div>
+        <button id="retry" class="glass-button">↻ <span id="retry-label">回起点重试</span></button>
+      </div>
+      <div class="game-bottom" id="bottom-hud" hidden>
+        <div class="movement"><span id="mode-icon" role="img" aria-label="冰面滑行">↝</span><div hidden><small id="mode-label">冰面滑行</small><strong id="speed" hidden aria-hidden="true">0 <em>m/s</em></strong></div></div>
+        <div class="charge-box" hidden aria-hidden="true"><div class="charge-heading"><span id="charge-label">深潜蓄力</span><strong id="charge-value" hidden aria-hidden="true">0%</strong></div><div class="charge-track"><i id="charge-fill"></i></div><small id="charge-hint" hidden></small></div><div id="charge-meter" class="sr-only" role="progressbar" aria-label="深潜能量：企鹅周围的气泡" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      </div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="overlay" id="overlay">
+        <div class="intro" id="intro">
+          <span class="intro-kicker"><i></i> 一场关于勇气的小小冒险</span>
+          <h1>向深蓝潜去，<br>向天空<span>跃起。</span></h1>
+          <p>入冬前，把这封信送到海湾那头。<br>沿着冰坡与路标，去找那盏归航的灯。</p>
+          <button class="primary-button" id="start">Start</button>
+          <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">五章旅程 · 已走过 0 / 5 章</p>
+        </div>
+        <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden><span class="eyebrow" id="dialog-kicker">TAKE A BREATH</span><h2 id="dialog-title">歇一会儿</h2><p id="dialog-text">冰海会在这里等你。</p><blockquote id="chapter-story" class="chapter-story" hidden></blockquote><div id="chapter-list" class="chapter-list" aria-label="旅程章节" hidden></div><button class="primary-button" id="resume">继续冒险 <span>→</span></button><div class="dialog-actions"><button class="dialog-restart" id="restart">重新开始本关</button><button class="dialog-restart" id="dialog-chapters">选择章节</button><button class="dialog-restart" id="replay">重玩整段旅程</button></div></div>
+      </div>
+      <div id="chapter-transition" class="chapter-transition" aria-hidden="true" hidden></div>
+      <div class="scene-caption" id="scene-caption"><span>南纬 66° · 浮冰海岸</span><i></i><span>下一站，远处的灯塔</span></div>
+    </section>
+
+    
+  </main>
+  <script type="module" src="./src/game.js"></script>
+</body>
+</html>
