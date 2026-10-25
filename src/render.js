@@ -1,3 +1,5 @@
+import {drawDizzyEffect} from './dizzy-effect.js';
+import {drawImpactEffects} from './impact-effects.js';
 import {CONFIG,remainingCharge} from './physics.js';
 import {surfaceAt} from './level.js';
 import {drawSprite,animationFrame,surfaceTransform} from './art.js';
@@ -70,10 +72,14 @@ function penguin(c,art,p,cam,time,level,menu=false){
   }
   else if(!menu)tilt=Math.max(-.32,Math.min(.32,p.vy*.0003))*facing;
   c.save();c.translate(x,y);c.rotate(tilt);c.scale(facing,1);
-  if(p.invulnerable>0&&!p.dead)c.globalAlpha=.6+.4*Math.cos(p.invulnerable*Math.PI*8);
   const anchorY=menu?0:p.grounded?CONFIG.halfHeight:-bh*scale/2;
   c.drawImage(art.images.get(art.CHARACTER+clip.spritesheet),frame.x+bx,by,bw,bh,-bw*scale/2,anchorY-(p.grounded||menu?bh*scale:0),bw*scale,bh*scale);
   c.restore();
+  if(!menu){
+    const hx=bw*scale*(pose==='swim'||pose==='slide'?.36:.24)*facing;
+    const hy=anchorY+bh*scale*(p.grounded?-.9:.12);
+    drawDizzyEffect(c,art,p,x+hx*Math.cos(tilt)-hy*Math.sin(tilt),y+hx*Math.sin(tilt)+hy*Math.cos(tilt));
+  }
 }
 const PROP_SIZE={cairn:[36,34],signpost:[73,66],rocks:[100,45],buoy:[42,66],footprints:[88,24],'cave-arch':[210,150],'ice-cracks':[100,82],envelope:[38,25],'home-lighthouse':[260,285],lighthouse:[100,155],checkpoint:[96,25.47]};
 const GROUND_PROPS=new Set(['cairn','signpost','rocks','footprints','envelope','home-lighthouse','lighthouse','checkpoint']);
@@ -151,6 +157,7 @@ export function render(c,state,level){
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
   penguin(c,art,p,cam,time,level,mode==='menu');
+  drawImpactEffects(c,art,state);
   if(p.wet&&mode==='playing'){
     drawEnergyBubbles(c,remainingCharge(p),p.x-cam.x,p.y-cam.y);
   }

@@ -394,6 +394,126 @@
         "h": 1253
       },
       "category": "wall-decals"
+    },
+    {
+      "id": "effect-landing-soft",
+      "file": "impact/landing-soft.png",
+      "rect": {
+        "x": 80,
+        "y": 113,
+        "w": 369,
+        "h": 293
+      }
+    },
+    {
+      "id": "effect-landing-hard",
+      "file": "impact/landing-hard.png",
+      "rect": {
+        "x": 28,
+        "y": 87,
+        "w": 484,
+        "h": 319
+      }
+    },
+    {
+      "id": "effect-wall-hit",
+      "file": "impact/wall-hit.png",
+      "rect": {
+        "x": 0,
+        "y": 61,
+        "w": 397,
+        "h": 416
+      }
+    },
+    {
+      "id": "effect-impact-strokes",
+      "file": "impact/impact-strokes.png",
+      "rect": {
+        "x": 186,
+        "y": 112,
+        "w": 212,
+        "h": 248
+      }
+    },
+    {
+      "id": "effect-impact-star",
+      "file": "impact/impact-star.png",
+      "rect": {
+        "x": 151,
+        "y": 116,
+        "w": 222,
+        "h": 251
+      }
+    },
+    {
+      "id": "effect-ice-chips",
+      "file": "impact/ice-chips.png",
+      "rect": {
+        "x": 134,
+        "y": 119,
+        "w": 233,
+        "h": 249
+      }
+    },
+    {
+      "id": "effect-dizzy-0",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 26,
+        "y": 128,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-1",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 538,
+        "y": 128,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-2",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 1050,
+        "y": 128,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-3",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 26,
+        "y": 640,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-4",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 538,
+        "y": 640,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-5",
+      "file": "impact/dizzy-animation.png",
+      "rect": {
+        "x": 1050,
+        "y": 640,
+        "w": 463,
+        "h": 279
+      }
     }
   ]
 }

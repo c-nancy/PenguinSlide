@@ -4,6 +4,7 @@ import { render, resetPose } from './render.js';
 import { HEALTH } from './health.js';
 import {createHealthHUD} from './health-hud.js';
 import { loadArt } from './art.js';
+import {addImpactEffect} from './impact-effects.js';
 import {snowCapStrip} from './snow-cap-ends.js';
 import { loadProgress, saveProgress, completeChapter, selectChapter } from './campaign.js';
 import { createNotices } from './narrative.js';
@@ -15,7 +16,7 @@ const updateHealthFish=createHealthHUD($('health-meter'));
 let storage;try{storage=window.localStorage;}catch{/* A private session can still play. */}
 let progress=loadProgress(storage,LEVELS.length),chapter=progress.current,level=LEVELS[chapter];
 let p=createPlayer(level.start.x,level.start.y);
-const state={p,cam:{x:p.x-410,y:p.y-335},time:0,particles:[],waterEffects:[],shake:0,mode:'menu'};
+const state={p,cam:{x:p.x-410,y:p.y-335},time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const keys=new Set();
 let last=0,accumulator=0,jumpQueued=false,elapsed=0,started=false,chaptersReturn='menu',effectTick=0;
@@ -25,7 +26,7 @@ function persist(){saveProgress(storage,progress);}
 function setMode(mode){state.mode=mode;frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
 function focusGame(){canvas.focus({preventScroll:true});}
 function clearInput(){keys.clear();jumpQueued=false;accumulator=0;}
-function clearEffects(){state.particles=[];state.waterEffects=[];state.shake=0;effectTick=0;}
+function clearEffects(){state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
 function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=show;}
 function play(){
@@ -171,10 +172,12 @@ function update(dt){
   elapsed+=dt;effectTick++;
   const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||keys.has('Space')),jump:jumpQueued};jumpQueued=false;
   step(p,input,level,dt);
+  state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);
+  if(p.impactEffect)addImpactEffect(state,p.impactEffect);
   if(p.hit){
-    state.shake=.25;burst('hurt',12);
+    state.shake=.25;
   }
-  if(p.reaction&&!p.hit){state.shake=.18;burst('hurt',8);}
+  if(p.reaction&&!p.hit){state.shake=.18;}
   if(p.event==='splash')burst('water');
   if(p.event==='breach'){burst('water',36);}
   if(p.event==='checkpoint')burst('gold',24);

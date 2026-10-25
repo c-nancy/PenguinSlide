@@ -111,7 +111,7 @@ function moveFreely(p,ix,iy,immersion,depth,dt) {
   }
 }
 export function step(p,input,level,dt) {
-  p.event=null;p.hit=null;p.reaction=null;
+  p.event=null;p.hit=null;p.reaction=null;p.impactEffect=null;
   if(!p.levelId&&level.id)p.levelId=level.id;
   if(p.finished||p.dead)return;
   p.invulnerable=Math.max(0,p.invulnerable-dt);
@@ -196,6 +196,9 @@ export function step(p,input,level,dt) {
     // depth recorded so holding ascent or revisiting it cannot refill that energy.
     p.energy=0;p.boosting=false;p.lastCharge=0;
   }
+  // Visual feedback includes safe landings, independently of damage rules.
+  p.impactEffect=impacts.filter(hit=>hit.speed>180&&!p.contacts.includes(hit.key))
+    .sort((a,b)=>b.speed-a.speed)[0]||null;
   resolveImpacts(p,impacts,[...touchingSurfaces(p,level),...impacts.map(hit=>hit.key)]);
   if(p.dead)return;
   for(const [index,checkpoint] of checkpointsFor(level).entries()){

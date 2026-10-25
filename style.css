@@ -86,7 +86,7 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .route-flag{width:27px;height:34px;flex:none;background:url('./assets/ui/route-flag.svg') center / contain no-repeat}
 .route-track{width:180px;height:2px;background:#77796a55;border-radius:40%}
 .route-track>i{background:#777565;height:1px}
-.route-track #route-dot{top:auto;bottom:-1px;left:0;width:23px;height:29px;border:0;border-radius:0;background:url('./assets/character/idle.png') center bottom / contain no-repeat;transform:translateX(-50%)}
+.route-track #route-dot{top:auto;bottom:-1px;left:0;width:34px;height:19px;border:0;border-radius:0;background:url('./assets/character/slide.png') center bottom / contain no-repeat;transform:translateX(-50%)}
 .underwater .route-track{background:#77796a55}.underwater .route-track>i{background:#777565}
 @media(max-width:850px){.route{padding:0;gap:8px}.route-track{width:100px}.route-nest{width:33px}.route-flag{width:23px}}
 
