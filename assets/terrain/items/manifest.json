@@ -1,0 +1,16 @@
+{
+  "backgrounds": [],
+  "sprites": [
+    {
+      "id": "finish-flag",
+      "file": "finish-flag.png",
+      "rect": {
+        "x": 5,
+        "y": 8,
+        "w": 393,
+        "h": 468
+      },
+      "groundFootY": 1
+    }
+  ]
+}

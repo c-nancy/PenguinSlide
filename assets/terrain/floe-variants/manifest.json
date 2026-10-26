@@ -1,0 +1,55 @@
+{
+  "backgrounds": [],
+  "sprites": [
+    {
+      "id": "floe-original-pointed",
+      "file": "floe-original-pointed.png",
+      "rect": {
+        "x": 5,
+        "y": 5,
+        "w": 465,
+        "h": 264
+      }
+    },
+    {
+      "id": "floe-original-flat",
+      "file": "floe-original-flat.png",
+      "rect": {
+        "x": 5,
+        "y": 5,
+        "w": 481,
+        "h": 159
+      }
+    },
+    {
+      "id": "floe-shallow",
+      "file": "floe-shallow.png",
+      "rect": {
+        "x": 41,
+        "y": 209,
+        "w": 1867,
+        "h": 461
+      }
+    },
+    {
+      "id": "floe-offset",
+      "file": "floe-offset.png",
+      "rect": {
+        "x": 28,
+        "y": 164,
+        "w": 1483,
+        "h": 751
+      }
+    },
+    {
+      "id": "floe-double-point",
+      "file": "floe-double-point.png",
+      "rect": {
+        "x": 41,
+        "y": 183,
+        "w": 1456,
+        "h": 671
+      }
+    }
+  ]
+}

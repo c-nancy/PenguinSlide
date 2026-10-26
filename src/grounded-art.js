@@ -1,5 +1,6 @@
 import {surfaceAt} from './level.js';
 import {drawSprite} from './art.js';
+import {ROCK_SINK} from './rock-outline.js';
 
 export function groundedPlacement(level,x,y,width,height,pivot=.5,footY=1){
   const candidates=(level.solids||[]).filter(s=>x>=s.x1&&x<=s.x2)
@@ -10,10 +11,18 @@ export function groundedPlacement(level,x,y,width,height,pivot=.5,footY=1){
 }
 
 export function drawGroundedSprite(c,art,id,level,cam,x,y,width,height,pivot=.5,mirror=false){
+  if(id==='cairn'||id==='rocks'){
+    const variants=['stones-original-cairn','stones-original-rocks','stones-low','stones-staggered','stones-twin'];
+    const selected=variants[Math.abs(Math.round(x*13+y*7))%variants.length];
+    const stone=art.sprites.get(selected);
+    if(stone){id=selected;height=width*stone.rect.h/stone.rect.w;}
+  }
   const sprite=art.sprites.get(id);if(!sprite)return null;
   const placement=groundedPlacement(level,x,y,width,height,pivot,sprite.groundFootY??1);
+  if(id.startsWith('stones-'))placement.drawY+=ROCK_SINK;
+  if(id==='finish-flag')placement.drawY+=4;
   // Nest stones sit slightly within the snow instead of balancing on its edge.
-  if(id==='checkpoint')placement.drawY+=height*.3;
+  if(id==='checkpoint')placement.drawY+=height*.3+4;
   if(['signpost','lighthouse','home-lighthouse'].includes(id))placement.drawY+=6;
   if(id==='checkpoint-family-standing'||id==='checkpoint-family-greeting')placement.drawY+=6;
   // Prints lie across the snow's upper face, below the platform's top edge.

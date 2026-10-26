@@ -5,7 +5,7 @@ export function resetPose(player){states.delete(player);}
 // Shared by the sprite renderer and HUD so the description matches the drawing.
 export function characterMotion(p,time,menu=false){
   let state=states.get(p);
-  if(!state){state={grounded:p.grounded,landAt:-Infinity,gait:'idle',swimFacing:p.facing===-1?-1:1,swimTilt:0};states.set(p,state);}
+  if(!state){state={grounded:p.grounded,landAt:-Infinity,gait:'idle',swimFacing:p.facing===-1?-1:1,swimTilt:0,time,pose:null,walkTime:0};states.set(p,state);}
   if(!menu&&p.grounded&&!state.grounded)state.landAt=time;
   if(!p.grounded||p.wet||menu)state.landAt=-Infinity;
   state.grounded=p.grounded;
@@ -15,7 +15,11 @@ export function characterMotion(p,time,menu=false){
     const standing=speed<12||(state.gait==='idle'&&speed<18);
     state.gait=standing?'idle':speed<(state.gait==='slide'?200:240)?'walk':'slide';
   }else state.gait='idle';
-  const pose=menu?'idle':p.wet?'swim':p.grounded?(landAge<.44?'landing':state.gait):'landing';
+  const pose=menu?'idle':p.wet?'swim':p.rockTrip&&!p.grounded?'landing':p.forceSlide>0?'slide':p.grounded?(landAge<.44?'landing':state.gait):'landing';
+  // Accumulate only the new interval: multiplying the whole game clock by a
+  // changing speed would jump between frames. HUD reads at the same time add zero.
+  if(pose==='walk'&&state.pose==='walk')state.walkTime+=Math.max(0,time-state.time)*Math.hypot(p.vx,p.vy||0)/90;
+  state.time=time;state.pose=pose;
   let facing=p.facing===-1?-1:1,swimTilt=0;
   if(pose==='swim'){
     const vy=p.vy||0;
@@ -29,7 +33,7 @@ export function characterMotion(p,time,menu=false){
   }else{
     state.swimFacing=facing;state.swimTilt=0;
   }
-  return {pose,speed,landAge,facing,swimTilt};
+  return {pose,speed,landAge,facing,swimTilt,walkTime:state.walkTime};
 }
 export function groundMotionLabel(pose){
   return {idle:'冰面站立',walk:'冰面行走',slide:'冰面滑行',landing:'落地缓冲'}[pose]||'冰面行走';

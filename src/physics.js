@@ -1,6 +1,7 @@
 import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
 import {hasShape,shapeOverlap,shapeSweep} from './shape-collision.js';
+import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
 
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
@@ -9,14 +10,18 @@ export const CONFIG = Object.freeze({
   standingFriction:.6,standingSpeed:18,
   airControl:100, swimThrust:650, swimHorizontalThrust:4400, buoyancy:75,
   waterLinearDrag:.45, waterQuadraticDrag:.0024,
+  airLinearDrag:.5, airQuadraticDrag:.0025,
   maxDepth:500, energyPerDepth:2500, boostAcceleration:2500
 });
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 export const chargeForDepth = depth => clamp(depth/CONFIG.maxDepth,0,1);
-export const remainingCharge = p => clamp(p.energy/(CONFIG.maxDepth*CONFIG.energyPerDepth),0,1);
+const depthForce=depth=>.4+chargeForDepth(depth);
+const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
+export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
   return {x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
-    facing:1,event:null,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,...healthState()};
+    facing:1,event:null,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
+    forceSlide:0,sliding:false,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
 export function checkpointsFor(level){return level.checkpoints|| (level.checkpoint?[level.checkpoint]:[]);}
 export function resetPlayer(p,level,fromStart=false) {
@@ -24,15 +29,28 @@ export function resetPlayer(p,level,fromStart=false) {
   const checkpoint=checkpointsFor(level)[index];
   const saved=!!(!fromStart&&p.checkpoint&&checkpoint&&(!p.levelId||!level.id||p.levelId===level.id));
   const at=saved?checkpoint:level.start;
-  Object.assign(p,createPlayer(at.x,at.y),{checkpoint:saved,checkpointIndex:saved?index:-1,levelId:level.id||null});
+  Object.assign(p,createPlayer(at.x,at.y),{health:saved?HEALTH.max:clamp(level.initialHealth??HEALTH.max,1,HEALTH.max),
+    checkpoint:saved,checkpointIndex:saved?index:-1,levelId:level.id||null});
 }
 function waterColumn(p,level) {
   return level.waters.some(([a,b])=>p.x>=a&&p.x<=b) &&
     !level.solids.some(s=>hasShape(s)?shapeOverlap(s,{left:p.x-.1,right:p.x+.1,top:p.y-.1,bottom:p.y+.1}):p.x>s.x1&&p.x<s.x2&&p.y>surfaceAt(s,p.x)&&p.y<s.bottom);
 }
 function recordDepth(p,level) {
-  const depth=clamp(p.y-level.waterY,0,CONFIG.maxDepth);
-  if(depth>p.maxDepth){p.energy+=(depth-p.maxDepth)*CONFIG.energyPerDepth;p.maxDepth=depth;}
+  if(level.depthCharge===false)return;
+  const absoluteDepth=Math.max(0,p.y-level.waterY);
+  if(p.rechargePending){
+    // A new descent restores the reserve appropriate to the current depth.
+    // Upward recoil alone cannot refill it, and old spent maxima are discarded.
+    if(p.vy<=0)return;
+    p.rechargePending=false;p.chargeFloor=0;
+  }
+  const depth=clamp(absoluteDepth-(p.chargeFloor||0),0,CONFIG.maxDepth);
+  if(depth>p.maxDepth){p.energy+=storedWork(depth)-storedWork(p.maxDepth);p.maxDepth=depth;}
+}
+function restartCharge(p,level){
+  p.energy=0;p.boosting=false;p.lastCharge=0;p.maxDepth=0;
+  p.chargeFloor=Math.max(0,p.y-level.waterY);p.rechargePending=true;
 }
 function tangent(s) {
   const slope=(s.y2-s.y1)/(s.x2-s.x1),length=Math.hypot(1,slope);
@@ -96,7 +114,11 @@ function moveFreely(p,ix,iy,immersion,depth,dt) {
   const thrustY=iy/inputLength*CONFIG.swimThrust;
   p.vx+=(ix*CONFIG.airControl*(1-immersion)+thrustX*immersion)*dt;
   p.vy+=(CONFIG.gravity*(1-immersion)+(thrustY-CONFIG.buoyancy)*immersion)*dt;
-  const drag=(CONFIG.waterLinearDrag+CONFIG.waterQuadraticDrag*Math.hypot(p.vx,p.vy))*immersion;
+  // Blend both media through the waterline; airborne speed no longer survives
+  // without resistance. The quadratic term especially damps fast breaches.
+  const speed=Math.hypot(p.vx,p.vy);
+  const drag=(CONFIG.waterLinearDrag+CONFIG.waterQuadraticDrag*speed)*immersion+
+    (CONFIG.airLinearDrag+CONFIG.airQuadraticDrag*speed)*(1-immersion);
   p.vx/=1+drag*dt;p.vy/=1+drag*dt;
 
   // Releasing the ascent key leaves only momentum, water resistance and buoyancy.
@@ -105,15 +127,21 @@ function moveFreely(p,ix,iy,immersion,depth,dt) {
     // E = a * distance, including the acceleration contribution to distance.
     const upwardSpeed=-p.vy;
     const affordable=(Math.sqrt(upwardSpeed*upwardSpeed+2*p.energy)-upwardSpeed)/dt;
-    const acceleration=Math.min(CONFIG.boostAcceleration*immersion,affordable);
+    // The deepest recorded dive determines force as well as stored work. Keep
+    // that force while ascending, rather than weakening it near the surface.
+    const acceleration=Math.min(CONFIG.boostAcceleration*depthForce(p.maxDepth)*immersion,affordable);
     const work=acceleration*(upwardSpeed*dt+.5*acceleration*dt*dt);
     p.energy=Math.max(0,p.energy-work);p.vy-=acceleration*dt;
   }
 }
 export function step(p,input,level,dt) {
   p.event=null;p.hit=null;p.reaction=null;p.impactEffect=null;
+  if(level.depthCharge===false){p.maxDepth=0;p.energy=0;p.boosting=false;p.lastCharge=0;}
   if(!p.levelId&&level.id)p.levelId=level.id;
   if(p.finished||p.dead)return;
+  p.forceSlide=Math.max(0,(p.forceSlide||0)-dt);
+  p.rockEvent=null;p.rockHit=null;
+  for(const e of p.rockDebris)e.age=Math.min(.36,e.age+dt);
   p.invulnerable=Math.max(0,p.invulnerable-dt);
   if(p.hitStop>0){p.hitStop=Math.max(0,p.hitStop-dt);return;}
   if(p.pendingKnockback){
@@ -135,8 +163,13 @@ export function step(p,input,level,dt) {
     if(support&&jump&&!wasWet){
       const t=tangent(support);p.vx+=CONFIG.jump*t.y;p.vy-=CONFIG.jump*t.x;p.event='jump';
     }
+    // An uncharged swimmer can make one ordinary hop near the surface. Deep
+    // swimming and a charged ascent still use their existing propulsion rules.
+    if(wasWet&&jump&&!p.surfaceJumped&&p.energy<=0&&p.y<=level.waterY+CONFIG.halfHeight){
+      p.vy=Math.min(p.vy,-CONFIG.jump);p.surfaceJumped=true;p.event='jump';
+    }
     const immersion=waterColumn(p,level)?clamp((p.y+CONFIG.halfHeight-level.waterY)/(2*CONFIG.halfHeight),0,1):0;
-    moveFreely(p,ix,iy,immersion,p.y-level.waterY,dt);
+    moveFreely(p,ix,iy,immersion,p.y-level.waterY-(p.chargeFloor||0),dt);
   }
 
   const incoming={vx:p.vx,vy:p.vy};
@@ -183,28 +216,35 @@ export function step(p,input,level,dt) {
     }
   }
   if(p.y+CONFIG.halfHeight>level.bottom){impact('floor',Math.max(0,incoming.vy),0,-1,{kind:'landing',angle:landingAngle(incoming.vx,incoming.vy)});p.y=level.bottom-CONFIG.halfHeight;p.vy=Math.min(0,p.vy);}
+  if(p.rockBounce&&p.grounded){
+    for(let i=impacts.length-1;i>=0;i--)if(impacts[i].kind==='landing')impacts.splice(i,1);
+    p.rockBounce=false;
+    if(p.rockTrip){p.rockTrip=false;p.forceSlide=.85;}
+  }
+  collideRocks(p,level,{x:oldX,y:oldY});
+  p.sliding=!p.wet&&isSliding(p);
   p.wet=p.y>level.waterY&&waterColumn(p,level);
-  if(p.wet&&!wasWet){p.maxDepth=0;p.energy=0;p.boosting=false;p.event='splash';}
+  if(p.wet&&!wasWet){p.maxDepth=0;p.energy=0;p.boosting=false;p.chargeFloor=0;p.rechargePending=false;p.surfaceJumped=false;p.event='splash';}
   if(p.wet)recordDepth(p,level);
   if(wasWet&&!p.wet){
     if(oldY>level.waterY&&p.y<=level.waterY&&p.vy<0){p.lastCharge=chargeForDepth(p.maxDepth);p.event='breach';}
     // The waterline changes forces and visuals, never velocity.
-    p.maxDepth=0;p.energy=0;p.boosting=false;
+    p.maxDepth=0;p.energy=0;p.boosting=false;p.rechargePending=false;
   }
   if(wasWet&&incoming.vy<0&&impacts.some(hit=>hit.kind!=='landing'&&hit.speed>0)){
-    // Even harmless/protected ascent impacts spend the reserve. Keep the deepest
-    // depth recorded so holding ascent or revisiting it cannot refill that energy.
-    p.energy=0;p.boosting=false;p.lastCharge=0;
+    restartCharge(p,level);
   }
   // Visual feedback includes safe landings, independently of damage rules.
   p.impactEffect=impacts.filter(hit=>hit.speed>180&&!p.contacts.includes(hit.key))
     .sort((a,b)=>b.speed-a.speed)[0]||null;
-  resolveImpacts(p,impacts,[...touchingSurfaces(p,level),...impacts.map(hit=>hit.key)]);
+  resolveImpacts(p,p.rockHit?[]:impacts,[...touchingSurfaces(p,level),...impacts.map(hit=>hit.key)]);
+  if(wasWet&&p.reaction)restartCharge(p,level);
+  applyRockFeedback(p);
   if(p.dead)return;
   for(const [index,checkpoint] of checkpointsFor(level).entries()){
     const previous=p.checkpointIndex>=0?p.checkpointIndex:p.checkpoint?0:-1;
     // Passing above the nest counts too; travelling below it or underwater does not.
-    if(index>previous&&!p.wet&&p.y<checkpoint.y+12&&p.x>checkpoint.x-100&&p.x<checkpoint.x+120){
+    if(index>previous&&!p.wet&&p.y<checkpoint.y+12&&p.x>checkpoint.x-(level.checkpointActivationBefore??100)&&p.x<checkpoint.x+120){
       p.checkpoint=true;p.checkpointIndex=index;p.health=HEALTH.max;p.event='checkpoint';
     }
   }

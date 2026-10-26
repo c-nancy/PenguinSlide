@@ -1,0 +1,380 @@
+{
+  "version": 2,
+  "backgrounds": [
+    {
+      "id": "coast",
+      "file": "../backgrounds/coast.png",
+      "width": 1536,
+      "height": 1024
+    },
+    {
+      "id": "underwater",
+      "file": "../backgrounds/underwater.png",
+      "width": 1536,
+      "height": 1024
+    }
+  ],
+  "sprites": [
+    {
+      "id": "seabed",
+      "label": "海底岩石带",
+      "file": "../terrain/seabed/seabed.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 496,
+        "h": 146
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "terrain"
+    },
+    {
+      "id": "lighthouse",
+      "label": "终点灯塔",
+      "file": "../terrain/items/lighthouse.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 319,
+        "h": 482
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "props",
+      "groundFootY": 0.989626556017
+    },
+    {
+      "id": "checkpoint",
+      "label": "石头企鹅巢 · 恢复生命 / 检查点",
+      "file": "../terrain/items/penguin-nest.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1504,
+        "h": 399
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "props",
+      "groundFootY": 0.972431077694
+    },
+    {
+      "id": "kelp",
+      "label": "海草",
+      "file": "../scenery/kelp.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 288,
+        "h": 411
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "props"
+    },
+    {
+      "id": "signpost",
+      "label": "空白路牌",
+      "file": "../terrain/items/signpost.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 392,
+        "h": 350
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "props",
+      "groundFootY": 0.985714285714
+    },
+    {
+      "id": "waterline",
+      "label": "水面波纹",
+      "file": "../effects/water/waterline.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 497,
+        "h": 122
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "effects"
+    },
+    {
+      "id": "splash-entry",
+      "label": "入水水花",
+      "file": "../effects/water/splash-entry.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 324,
+        "h": 212
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "effects"
+    },
+    {
+      "id": "splash-breach",
+      "label": "出水水花",
+      "file": "../effects/water/splash-breach.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 377,
+        "h": 362
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "effects"
+    },
+    {
+      "id": "fish",
+      "label": "鱼群",
+      "file": "../scenery/fish.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 378,
+        "h": 211
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 1
+      },
+      "category": "effects"
+    },
+    {
+      "id": "ice-wall-repeat",
+      "label": "竖向连续铅笔冰壁",
+      "file": "../terrain/walls/ice-wall-repeat.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 1254,
+        "h": 1254
+      },
+      "category": "terrain-material"
+    },
+    {
+      "id": "snow-cap-repeat",
+      "label": "不规则横向连续雪帽",
+      "file": "../terrain/snow-caps/snow-cap-repeat.png",
+      "rect": {
+        "x": 0,
+        "y": 408,
+        "w": 1536,
+        "h": 288
+      },
+      "category": "terrain-material"
+    },
+    {
+      "id": "ice-edge-pencil",
+      "label": "独立竖向铅笔边线",
+      "file": "../terrain/walls/ice-edge-pencil.png",
+      "rect": {
+        "x": 472,
+        "y": 0,
+        "w": 88,
+        "h": 1536
+      },
+      "category": "terrain-material"
+    },
+    {
+      "id": "snow-cap-end",
+      "label": "独立圆润雪帽端头",
+      "file": "../terrain/snow-caps/snow-cap-end.png",
+      "rect": {
+        "x": 0,
+        "y": 384,
+        "w": 384,
+        "h": 320
+      },
+      "category": "terrain-material"
+    },
+    {
+      "id": "crack-long",
+      "label": "铅笔冰裂缝 · long",
+      "file": "../terrain/cracks/crack-long.png",
+      "rect": {
+        "x": 373,
+        "y": 0,
+        "w": 325,
+        "h": 1536
+      },
+      "category": "wall-decals"
+    },
+    {
+      "id": "crack-diagonal",
+      "label": "铅笔冰裂缝 · diagonal",
+      "file": "../terrain/cracks/crack-diagonal.png",
+      "rect": {
+        "x": 179,
+        "y": 29,
+        "w": 1207,
+        "h": 977
+      },
+      "category": "wall-decals"
+    },
+    {
+      "id": "crack-cross",
+      "label": "铅笔冰裂缝 · cross",
+      "file": "../terrain/cracks/crack-cross.png",
+      "rect": {
+        "x": 300,
+        "y": 1,
+        "w": 874,
+        "h": 1253
+      },
+      "category": "wall-decals"
+    },
+    {
+      "id": "effect-landing-soft",
+      "file": "../effects/impact/landing-soft.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 369,
+        "h": 293
+      }
+    },
+    {
+      "id": "effect-landing-hard",
+      "file": "../effects/impact/landing-hard.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 484,
+        "h": 319
+      }
+    },
+    {
+      "id": "effect-wall-hit",
+      "file": "../effects/impact/wall-hit.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 397,
+        "h": 416
+      }
+    },
+    {
+      "id": "effect-dizzy-0",
+      "file": "../effects/dizzy/dizzy-0.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-1",
+      "file": "../effects/dizzy/dizzy-1.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-2",
+      "file": "../effects/dizzy/dizzy-2.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-3",
+      "file": "../effects/dizzy/dizzy-3.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-4",
+      "file": "../effects/dizzy/dizzy-4.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "effect-dizzy-5",
+      "file": "../effects/dizzy/dizzy-5.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "w": 463,
+        "h": 279
+      }
+    },
+    {
+      "id": "fish-school-02",
+      "file": "../scenery/fish-school-02.png",
+      "rect": {
+        "x": 149,
+        "y": 150,
+        "w": 1407,
+        "h": 655
+      }
+    },
+    {
+      "id": "fish-school-03",
+      "file": "../scenery/fish-school-03.png",
+      "rect": {
+        "x": 160,
+        "y": 58,
+        "w": 1414,
+        "h": 825
+      }
+    },
+    {
+      "id": "kelp-02",
+      "file": "../scenery/kelp-02.png",
+      "rect": {
+        "x": 52,
+        "y": 256,
+        "w": 1459,
+        "h": 681
+      }
+    },
+    {
+      "id": "kelp-03",
+      "file": "../scenery/kelp-03.png",
+      "rect": {
+        "x": 325,
+        "y": 23,
+        "w": 685,
+        "h": 1431
+      }
+    }
+  ]
+}

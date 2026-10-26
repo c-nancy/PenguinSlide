@@ -1,0 +1,95 @@
+{
+  "backgrounds": [],
+  "sprites": [
+    {
+      "id": "bird-albatross-standing",
+      "file": "albatross/albatross-standing.png",
+      "rect": {
+        "x": 210,
+        "y": 136,
+        "w": 1147,
+        "h": 824
+      }
+    },
+    {
+      "id": "bird-albatross-fly",
+      "file": "albatross/albatross-fly.png",
+      "rect": {
+        "x": 41,
+        "y": 68,
+        "w": 1476,
+        "h": 908
+      }
+    },
+    {
+      "id": "bird-albatross-folded",
+      "file": "albatross/albatross-folded.png",
+      "rect": {
+        "x": 167,
+        "y": 168,
+        "w": 1278,
+        "h": 753
+      }
+    },
+    {
+      "id": "bird-petrel-standing",
+      "file": "petrel/petrel-standing.png",
+      "rect": {
+        "x": 300,
+        "y": 194,
+        "w": 900,
+        "h": 689
+      }
+    },
+    {
+      "id": "bird-petrel-fly",
+      "file": "petrel/petrel-fly.png",
+      "rect": {
+        "x": 370,
+        "y": 40,
+        "w": 805,
+        "h": 956
+      }
+    },
+    {
+      "id": "bird-petrel-folded",
+      "file": "petrel/petrel-folded.png",
+      "rect": {
+        "x": 310,
+        "y": 242,
+        "w": 943,
+        "h": 645
+      }
+    },
+    {
+      "id": "bird-skua-standing",
+      "file": "skua/skua-standing.png",
+      "rect": {
+        "x": 171,
+        "y": 116,
+        "w": 1179,
+        "h": 862
+      }
+    },
+    {
+      "id": "bird-skua-fly",
+      "file": "skua/skua-fly.png",
+      "rect": {
+        "x": 80,
+        "y": 16,
+        "w": 1409,
+        "h": 989
+      }
+    },
+    {
+      "id": "bird-skua-folded",
+      "file": "skua/skua-folded.png",
+      "rect": {
+        "x": 114,
+        "y": 164,
+        "w": 1317,
+        "h": 756
+      }
+    }
+  ]
+}

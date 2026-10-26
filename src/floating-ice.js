@@ -9,7 +9,7 @@ export function floatingIceProfile(image,rect){
 }
 
 export function drawFloatingIce(c,art,s,cam){
-  const id=s.kind==='tunnel'?'ice-slab':'ice-floe',sprite=art.sprites.get(id);
+  const id=s.kind==='tunnel'?'ice-slab':s.floeVariant||'floe-original-pointed',sprite=art.sprites.get(id)||art.sprites.get('ice-floe');
   if(!sprite)return;
   const r=sprite.rect,image=art.images.get(sprite.url||art.ENV+sprite.file);
   const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,band=!sprite.topRows&&Math.abs(slope)<1e-9?width:4;

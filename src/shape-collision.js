@@ -1,10 +1,11 @@
+import {FLOE_VARIANT_MASKS} from './floe-variant-masks.js';
 import {FLOE_MASK} from './floe-mask-data.js';
 
 const cache=new WeakMap(),cell=2;
 export const hasShape=s=>s.kind==='floe';
 function columnsFor(s){
   if(cache.has(s))return cache.get(s);
-  const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,mask=FLOE_MASK,columns=[];
+  const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,mask=FLOE_VARIANT_MASKS[s.floeVariant]||FLOE_MASK,columns=[];
   for(let x=0;x<width;x+=cell){
     const center=Math.min(width,x+cell/2),band=Math.floor(center/4)*4,step=Math.min(4,width-band),overlap=band+step<width?.35:0;
     const a=Math.floor(band/width*mask.width),b=Math.min(mask.width,Math.ceil((band+step+overlap)/width*mask.width));

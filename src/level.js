@@ -7,7 +7,7 @@ export const LEVEL = {
     {x1:1110,x2:1310,y1:322,y2:322,bottom:450,kind:'floe'},
     {x1:1800,x2:2160,y1:300,y2:300,bottom:1120,kind:'checkpoint'},
     {x1:2700,x2:3100,y1:500,y2:500,bottom:640,kind:'tunnel'},
-    {x1:3800,x2:5000,y1:70,y2:240,bottom:1120,kind:'finish'}
+    {x1:3800,x2:5000,y1:240,y2:300,bottom:1120,kind:'finish'}
   ],
   signs: [
     {x:330,y:235,title:'向海而行',sub:'A / D 移动 · 空格跳跃'},

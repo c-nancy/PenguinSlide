@@ -1,0 +1,65 @@
+{
+  "backgrounds": [],
+  "sprites": [
+    {
+      "id": "stones-original-cairn-break-0",
+      "file": "stones-original-cairn/sheet.png",
+      "rect": {
+        "x": 112,
+        "y": 32,
+        "w": 974,
+        "h": 599
+      }
+    },
+    {
+      "id": "stones-original-cairn-break-1",
+      "file": "stones-original-cairn/sheet.png",
+      "rect": {
+        "x": 1086,
+        "y": 385,
+        "w": 1058,
+        "h": 264
+      }
+    },
+    {
+      "id": "stones-staggered-break-0",
+      "file": "stones-staggered/sheet.png",
+      "rect": {
+        "x": 72,
+        "y": 169,
+        "w": 696,
+        "h": 709
+      }
+    },
+    {
+      "id": "stones-staggered-break-1",
+      "file": "stones-staggered/sheet.png",
+      "rect": {
+        "x": 768,
+        "y": 691,
+        "w": 748,
+        "h": 188
+      }
+    },
+    {
+      "id": "stones-twin-break-0",
+      "file": "stones-twin/sheet.png",
+      "rect": {
+        "x": 34,
+        "y": 259,
+        "w": 734,
+        "h": 482
+      }
+    },
+    {
+      "id": "stones-twin-break-1",
+      "file": "stones-twin/sheet.png",
+      "rect": {
+        "x": 768,
+        "y": 564,
+        "w": 767,
+        "h": 177
+      }
+    }
+  ]
+}

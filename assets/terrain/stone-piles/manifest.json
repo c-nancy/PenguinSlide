@@ -1,0 +1,60 @@
+{
+  "backgrounds": [],
+  "sprites": [
+    {
+      "id": "stones-original-cairn",
+      "file": "stones-original-cairn.png",
+      "rect": {
+        "x": 4,
+        "y": 5,
+        "w": 285,
+        "h": 268
+      },
+      "groundFootY": 1
+    },
+    {
+      "id": "stones-original-rocks",
+      "file": "stones-original-rocks.png",
+      "rect": {
+        "x": 4,
+        "y": 5,
+        "w": 454,
+        "h": 199
+      },
+      "groundFootY": 1
+    },
+    {
+      "id": "stones-low",
+      "file": "stones-low.png",
+      "rect": {
+        "x": 144,
+        "y": 311,
+        "w": 1302,
+        "h": 459
+      },
+      "groundFootY": 1
+    },
+    {
+      "id": "stones-staggered",
+      "file": "stones-staggered.png",
+      "rect": {
+        "x": 155,
+        "y": 208,
+        "w": 972,
+        "h": 860
+      },
+      "groundFootY": 1
+    },
+    {
+      "id": "stones-twin",
+      "file": "stones-twin.png",
+      "rect": {
+        "x": 200,
+        "y": 201,
+        "w": 1150,
+        "h": 646
+      },
+      "groundFootY": 1
+    }
+  ]
+}

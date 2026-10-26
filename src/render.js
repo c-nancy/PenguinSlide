@@ -13,6 +13,10 @@ import {snowCapStrip} from './snow-cap-ends.js';
 import {drawFloatingIce} from './floating-ice.js';
 import {modularSlab} from './modular-slab.js';
 import {drawWallCracks} from './wall-cracks.js';
+import {drawTutorialKeys} from './tutorial-guidance.js';
+import {rockBounds} from './rock-outline.js';
+import {rockAppearance} from './stone-animation.js';
+import {drawBirds} from './birds.js';
 export {resetPose} from './character-state.js';
 const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
@@ -57,9 +61,9 @@ function terrain(c,art,s,cam,solids){
   }
 }
 function penguin(c,art,p,cam,time,level,menu=false){
-  const {pose,speed,landAge,facing,swimTilt}=characterMotion(p,time,menu);
+  const {pose,walkTime,landAge,facing,swimTilt}=characterMotion(p,time,menu);
   const clip=art.character.animations[pose];
-  const frame=pose==='landing'?clip.frames[p.grounded?animationFrame(clip,.15+landAge):0]:clip.frames[animationFrame(clip,time*(pose==='walk'?Math.max(.55,speed/90):1))];
+  const frame=pose==='landing'?clip.frames[p.grounded?animationFrame(clip,.15+landAge):0]:clip.frames[animationFrame(clip,pose==='walk'?walkTime:time)];
   const scale=(pose==='slide'||pose==='swim'?69/clip.frames[0].contentBounds[2]:48/clip.frames[0].contentBounds[3])*(menu?3.25:1);
   const [bx,by,bw,bh]=frame.contentBounds,x=menu?W/2:p.x-cam.x,y=menu?445:p.y-cam.y+(p.grounded?3:0);
   let tilt=0;
@@ -111,8 +115,8 @@ function landmarks(c,art,level,cam,p,mode){
     drawGroundedSprite(c,art,'home-lighthouse',level,cam,goal.x,goal.y,290,310,.78);
     if(mode==='finished')drawGroundedSprite(c,art,'envelope',level,cam,goal.x+45,goal.y,42,28);
   }else if(goal.kind==='beacon')drawGroundedSprite(c,art,'lighthouse',level,cam,goal.x,goal.y,104,158);
-  else if(goal.kind==='shore')drawGroundedSprite(c,art,'cairn',level,cam,goal.x+50,goal.y,40,38);
-  else if(goal.kind==='cave-exit')drawGroundedSprite(c,art,'cairn',level,cam,goal.x+45,goal.y,42,40);
+  else if(goal.kind==='shore')drawGroundedSprite(c,art,'finish-flag',level,cam,goal.x+50,goal.y,62,76);
+  else if(goal.kind==='cave-exit')drawGroundedSprite(c,art,'finish-flag',level,cam,goal.x+45,goal.y,62,76);
 }
 function scenery(c,art,level,cam,sy){
   const theme=level.theme||'coast',url=art.backgrounds?.get(theme)||art.ENV+'coast-background.png';
@@ -134,16 +138,29 @@ export function render(c,state,level){
   scenery(c,art,level,cam,sy);
   if(sy<H){
     c.save();c.beginPath();c.rect(0,Math.max(0,sy),W,H);c.clip();
-    c.drawImage(art.images.get(art.ENV+'underwater-background.png'),-cam.x*.045,sy,1580,level.bottom-level.waterY+160);
+    c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),-cam.x*.045,sy,1580,level.bottom-level.waterY+160);
     c.globalAlpha=.45;
-    for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=level.waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100)drawSprite(c,art,'fish',x,y,76,42);}
+    for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=level.waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100){
+      const id=['fish','fish-school-02','fish-school-03'][i%3],sprite=art.sprites.get(id)||art.sprites.get('fish');
+      const height=sprite?.rect?76*sprite.rect.h/sprite.rect.w:42;
+      drawSprite(c,art,sprite?.id||'fish',x,y,76,height);
+    }}
     c.restore();
   }
-  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0)drawSprite(c,art,'kelp',x+60-cam.x,bed-92,65,94);}
+  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
+    const index=((x/480)%3+3)%3,id=['kelp','kelp-02','kelp-03'][index],sprite=art.sprites.get(id)||art.sprites.get('kelp');
+    const ratio=sprite?.rect?sprite.rect.w/sprite.rect.h:65/94,height=Math.min(94,96/ratio),width=height*ratio;
+    drawSprite(c,art,sprite?.id||'kelp',x+92-cam.x-width/2,bed+2-height,width,height);
+  }}
   if(mode!=='menu'){
     decorations(c,art,level,cam,true);
     for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids);
     decorations(c,art,level,cam);
+    for(const original of level.rocks||[]){
+      const rock=rockAppearance(original,p);
+      const bounds=rockBounds(rock);
+      drawSprite(c,art,rock.sprite,bounds.left-cam.x,bounds.top-cam.y,rock.w,rock.h);
+    }
     landmarks(c,art,level,cam,p,mode);
   }
   if(sy>-25&&sy<H)for(const [left,right] of level.waters){
@@ -153,13 +170,15 @@ export function render(c,state,level){
   }
   if(mode==='menu'){
     const wash=c.createLinearGradient(0,0,790,0);wash.addColorStop(0,'#f3ecdedf');wash.addColorStop(.7,'#f3ecdebc');wash.addColorStop(1,'#f3ecde00');c.fillStyle=wash;c.fillRect(0,0,790,H);
-    drawSprite(c,art,'ice-floe',W/2-158,438,310,145);
+    drawSprite(c,art,art.sprites.has('floe-original-pointed')?'floe-original-pointed':'ice-floe',W/2-158,438,310,145);
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
+  if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
   drawImpactEffects(c,art,state);
-  if(p.wet&&mode==='playing'){
+  if(p.wet&&mode==='playing'&&level.depthCharge!==false){
     drawEnergyBubbles(c,remainingCharge(p),p.x-cam.x,p.y-cam.y);
   }
+  drawTutorialKeys(c,art,level,p,cam,mode);
   for(const a of particles){c.save();c.globalAlpha=Math.max(0,a.life/a.maxLife);if(a.kind==='bubble'){c.strokeStyle='#686b60';c.lineWidth=1;c.beginPath();c.arc(a.x-cam.x,a.y-cam.y,a.size,0,Math.PI*2);c.stroke();}else{c.fillStyle=a.kind==='hurt'?'#a7655a':a.kind==='gold'?'#a18a56':'#eee8da';c.fillRect(a.x-cam.x,a.y-cam.y,a.size,a.size);}c.restore();}
 }
