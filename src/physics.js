@@ -6,7 +6,7 @@ import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
   radius:17, halfHeight:22, gravity:1000, jump:300,
-  groundThrust:220, groundBrakeThrust:420, iceFriction:.018, iceLinearDrag:.025, iceQuadraticDrag:.00075,
+  groundThrust:220, groundBrakeThrust:420, slideRampTime:1, slideDriveGain:.12, iceFriction:.018, iceLinearDrag:.025, iceQuadraticDrag:.00075,
   standingFriction:.6,standingSpeed:18,
   airControl:100, swimThrust:650, swimHorizontalThrust:4400, buoyancy:75,
   waterLinearDrag:.45, waterQuadraticDrag:.0024,
@@ -21,7 +21,7 @@ export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0
 export function createPlayer(x=150,y=238) {
   return {x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
     facing:1,event:null,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
-    forceSlide:0,sliding:false,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
+    forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
 export function checkpointsFor(level){return level.checkpoints|| (level.checkpoint?[level.checkpoint]:[]);}
 export function resetPlayer(p,level,fromStart=false) {
@@ -95,13 +95,20 @@ function touchingSurfaces(p,level){
 function moveOnIce(p,s,ix,dt) {
   const t=tangent(s);
   let speed=p.vx*t.x+p.vy*t.y;
+  const forward=ix!==0&&ix*speed>=0;
+  const building=forward&&isSliding(p);
+  if(!building||p.slideDriveDirection!==Math.sign(ix))p.slideDriveTime=0;
+  p.slideDriveDirection=building?Math.sign(ix):0;
+  if(building)p.slideDriveTime=Math.min(CONFIG.slideRampTime,p.slideDriveTime+dt);
+  const ramp=p.slideDriveTime/CONFIG.slideRampTime;
+  const driveGain=1+CONFIG.slideDriveGain*ramp*ramp*(3-2*ramp);
   const normalForce=CONFIG.gravity*t.x,downhillForce=CONFIG.gravity*t.y;
   // Standing feet grip more strongly than a sliding belly. Hold small residual
   // motion only when idle and gravity stays within the static-friction limit.
   if(ix===0&&Math.abs(speed)<CONFIG.standingSpeed&&Math.abs(downhillForce)<=CONFIG.standingFriction*normalForce){
     p.vx=0;p.vy=0;return;
   }
-  const drive=ix*speed<0?CONFIG.groundBrakeThrust:CONFIG.groundThrust;
+  const drive=ix*speed<0?CONFIG.groundBrakeThrust:CONFIG.groundThrust*driveGain;
   const force=ix*drive*t.x+CONFIG.gravity*t.y;
   speed=(speed+force*dt)/(1+(CONFIG.iceLinearDrag+CONFIG.iceQuadraticDrag*Math.abs(speed))*dt);
   const friction=CONFIG.iceFriction*CONFIG.gravity*t.x*dt;
@@ -143,7 +150,7 @@ export function step(p,input,level,dt) {
   p.rockEvent=null;p.rockHit=null;
   for(const e of p.rockDebris)e.age=Math.min(.36,e.age+dt);
   p.invulnerable=Math.max(0,p.invulnerable-dt);
-  if(p.hitStop>0){p.hitStop=Math.max(0,p.hitStop-dt);return;}
+  if(p.hitStop>0){p.slideDriveTime=0;p.slideDriveDirection=0;p.hitStop=Math.max(0,p.hitStop-dt);return;}
   if(p.pendingKnockback){
     p.vx=p.pendingKnockback.vx;p.vy=p.pendingKnockback.vy;p.pendingKnockback=null;
   }
@@ -160,6 +167,7 @@ export function step(p,input,level,dt) {
   const groundMotion=!!support&&!jump&&!wasWet;
   if(groundMotion)moveOnIce(p,support,ix,dt);
   else {
+    p.slideDriveTime=0;p.slideDriveDirection=0;
     if(support&&jump&&!wasWet){
       const t=tangent(support);p.vx+=CONFIG.jump*t.y;p.vy-=CONFIG.jump*t.x;p.event='jump';
     }

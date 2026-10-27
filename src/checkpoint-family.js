@@ -6,7 +6,7 @@ export function checkpointFamilySprite(player,index){
 }
 
 export function drawCheckpointFamily(c,art,level,cam,cp,index,player){
-  // Leave the nest and the arriving player clear; adults match the hero's height.
+  // Larger emperor penguins stand beyond the nest and remain clear of the player.
   drawGroundedSprite(c,art,checkpointFamilySprite(player,index),level,cam,
-    cp.x+105,cp.y+22,96,64,.5,true);
+    cp.x+123,cp.y+22,132,88,.5,true);
 }
