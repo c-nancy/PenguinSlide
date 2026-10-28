@@ -89,7 +89,27 @@ export const STORY_LEVELS=[
       {x1:7850,x2:8100,y1:730,y2:520,speed:45}],
     storyNotices:[{id:'chapter-3:departure',x1:0,x2:450,text:'大海的另一边，还在前方。'},
       {id:'chapter-3:current',x1:3050,x2:3240,text:'原来，海水也会送你一程。'}],
-    decorations:[{kind:'buoy',x:820,y:380,w:55,h:74}]})
+    decorations:[{kind:'buoy',x:820,y:380,w:55,h:74}]}),
+  chapter(4,'漂移冰原','bay',[
+    block(-100,600,330),block(600,800,330,395,'ramp'),
+    block(2200,2650,395,350,'ramp'),block(2650,3050,350,350,'checkpoint'),block(3050,3250,350,395,'ramp'),
+    block(5200,5650,395,350,'ramp'),block(5650,6050,350,350,'checkpoint'),block(6050,6250,350,395,'ramp'),
+    block(8600,9050,395,350,'ramp'),block(9050,9450,350,350,'checkpoint'),block(9450,9650,350,395,'ramp'),
+    block(12000,12650,395,330,'ramp'),block(12650,13200,330,330,'finish')
+  ],[[800,2200],[3250,5200],[6250,8600],[9650,12000]],[2850,5850,9250],12900,
+    {entry:'',mid:'',exit:'',transition:''},
+    {bottom:1040,goal:{x:12930,y:330,kind:'lighthouse'},
+      currents:[{x1:3400,x2:4650,y1:400,y2:650,speed:360,blend:75},
+        {x1:7200,x2:8200,y1:400,y2:650,speed:380,blend:75},
+        {x1:9800,x2:11600,y1:400,y2:650,speed:380,blend:75}],
+      movingIce:[
+        {id:'lesson-slow',x1:1100,x2:1540,y1:350,y2:350,bottom:540,kind:'floe',floeVariant:'floe-original-flat',motion:'slow',amplitude:180,period:25},
+        {id:'current-ride',x1:3500,x2:3920,y1:350,y2:350,bottom:580,kind:'floe',floeVariant:'floe-original-flat',motion:'current',end:4500,trigger:3500},
+        {id:'transfer-slow',x1:6620,x2:7020,y1:350,y2:350,bottom:540,kind:'floe',floeVariant:'floe-shallow',motion:'slow',amplitude:150,period:24},
+        {id:'transfer-fast',x1:7330,x2:7710,y1:350,y2:350,bottom:580,kind:'floe',floeVariant:'floe-original-flat',motion:'current',end:7880,trigger:7100},
+        {id:'final-first',x1:9850,x2:10230,y1:350,y2:350,bottom:580,kind:'floe',floeVariant:'floe-original-flat',motion:'current',end:10600,trigger:9550},
+        {id:'final-second',x1:11100,x2:11480,y1:350,y2:350,bottom:580,kind:'floe',floeVariant:'floe-shallow',motion:'current',end:11460,trigger:10850}
+      ]})
 ];
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
@@ -97,7 +117,8 @@ export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 const birdPerches=[
   [[460,'petrel',25],[3110,'skua',29],[7050,'albatross',34]],
   [[380,'petrel',25],[7470,'skua',29],[9130,'albatross',34]],
-  [[320,'petrel',25],[5750,'skua',29],[12700,'albatross',34]]
+  [[320,'petrel',25],[5750,'skua',29],[12700,'albatross',34]],
+  [[340,'petrel',25],[12700,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
   level.birds=birdPerches[index].map(([x,species,height])=>{

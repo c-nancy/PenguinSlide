@@ -97,7 +97,7 @@ function decorations(c,art,level,cam,behind=false){
     if(item.x+w<cam.x||item.x-w>cam.x+W)continue;
     c.save();if(behind)c.globalAlpha=.42;
     if(GROUND_PROPS.has(item.kind))drawGroundedSprite(c,art,item.kind,level,cam,item.x,item.y,w,h);
-    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,item.y-h-cam.y,w,h);
+    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,item.y-h-cam.y+(item.kind==='buoy'?h*.14:0),w,h);
     c.restore();
   }
 }
@@ -172,6 +172,14 @@ export function render(c,state,level){
     const ratio=sprite?.rect?sprite.rect.w/sprite.rect.h:65/94,height=Math.min(94,96/ratio),width=height*ratio;
     drawSprite(c,art,sprite?.id||'kelp',x+92-cam.x-width/2,bed+2-height,width,height);
   }}
+  // Draw a continuous surface behind the terrain. Low receiving ramps start
+  // underwater, so cutting the waves at the ramp's x1 leaves a visible seam.
+  if(sy>-25&&sy<H){
+    c.save();c.beginPath();c.rect(0,sy-7,W,28);c.clip();
+    for(let x=Math.floor(cam.x/180)*180;x<cam.x+W;x+=180)
+      drawSprite(c,art,'waterline',x-cam.x,sy-6+Math.sin(time*2)*1.2,184,23);
+    c.restore();
+  }
   if(mode!=='menu'){
     decorations(c,art,level,cam,true);
     for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids);
@@ -182,11 +190,6 @@ export function render(c,state,level){
       drawSprite(c,art,rock.sprite,bounds.left-cam.x,bounds.top-cam.y,rock.w,rock.h);
     }
     landmarks(c,art,level,cam,p,mode);
-  }
-  if(sy>-25&&sy<H)for(const [left,right] of level.waters){
-    c.save();c.beginPath();c.rect(left-cam.x,sy-7,right-left,28);c.clip();
-    for(let x=left;x<right;x+=180)if(x+180>cam.x&&x<cam.x+W)drawSprite(c,art,'waterline',x-cam.x,sy-6+Math.sin(time*2)*1.2,184,23);
-    c.restore();
   }
   if(mode==='menu'){
     const wash=c.createLinearGradient(0,0,790,0);wash.addColorStop(0,'#f3ecdedf');wash.addColorStop(.7,'#f3ecdebc');wash.addColorStop(1,'#f3ecde00');c.fillStyle=wash;c.fillRect(0,0,790,H);

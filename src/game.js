@@ -1,3 +1,4 @@
+import {movingWorld} from './moving-ice.js';
 import {emitRing,updateRings} from './bubble-rings.js';
 import { LEVELS } from './levels.js';
 import { CONFIG, createPlayer, step, resetPlayer, remainingCharge } from './physics.js';
@@ -56,7 +57,7 @@ function play(){
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与三章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=`两段练习与四章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){
@@ -208,7 +209,7 @@ function update(dt){
   const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space'))),jump:jumpQueued};jumpQueued=false;
   const healthBefore=p.health,previous={x:p.x,y:p.y};
   step(p,input,level,dt);
-  updateRings(state.rings,level,dt);
+  updateRings(state.rings,movingWorld(p,level),dt);
   updateAmbientBubbles(state.ambientBubbles,p,previous,state.time);
   updateBirds(state.birds,p,dt);
   if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
@@ -277,6 +278,6 @@ function frame(timestamp){
   while(accumulator>=1/120){update(1/120);accumulator-=1/120;}
   ctx.setTransform(canvas.width/1280,0,0,canvas.height/720,0,0);ctx.clearRect(0,0,1280,720);ctx.save();
   if(state.shake>0&&!reducedMotion.matches&&state.mode==='playing')ctx.translate(Math.sin(state.time*77)*state.shake*12,Math.cos(state.time*63)*state.shake*8);
-  render(ctx,state,level);ctx.restore();updateHUD();requestAnimationFrame(frame);
+  render(ctx,state,movingWorld(p,level));ctx.restore();updateHUD();requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

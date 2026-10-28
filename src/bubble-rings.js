@@ -25,13 +25,13 @@ export function updateRings(rings,level,dt){
  for(const r of rings){
   if(r.broken!==null){r.broken+=dt;continue;}
   r.age+=dt;
-  const speed=240*Math.exp(-.45*r.age),flow=waterCurrentAt(level,r.x,r.y);
+  const speed=276*Math.exp(-.45*r.age),flow=waterCurrentAt(level,r.x,r.y);
   const dx=(r.dx*speed+flow*.25)*dt,dy=(r.dy*speed-10)*dt,n=Math.max(1,Math.ceil(Math.hypot(dx,dy)/4));
   for(let i=0;i<n;i++){
    const x=r.x+dx/n,y=r.y+dy/n;
    if(blocked(level,x,y)){r.broken=0;break;}
    r.x=x;r.y=y;r.distance+=Math.hypot(dx/n,dy/n);
-   if(r.distance>=260||r.age>=1.8){r.broken=0;break;}
+   if(r.distance>=300||r.age>=1.8){r.broken=0;break;}
   }
  }
  for(let i=rings.length-1;i>=0;i--)if(rings[i].broken>=.36&&rings[i].broken!==null)rings.splice(i,1);

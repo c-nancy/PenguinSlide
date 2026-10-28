@@ -1,3 +1,4 @@
+import {movingWorld,riddenIce,advanceIce} from './moving-ice.js';
 import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
 import {hasShape,shapeOverlap,shapeSweep} from './shape-collision.js';
@@ -20,7 +21,7 @@ const depthForce=depth=>.4+chargeForDepth(depth);
 const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
 export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
-  return {x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
+  return {iceWorld:null,platformVX:0,x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
     facing:1,event:null,waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
     forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
@@ -158,7 +159,26 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
     p.energy=Math.max(0,p.energy-work);p.vy-=acceleration*dt;
   }
 }
-export function step(p,input,level,dt) {
+export function step(p,input,level,dt){
+  if(!level.movingIce?.length)return stepCore(p,input,level,dt);
+  if(p.finished||p.dead)return;
+  const world=movingWorld(p,level),ride=riddenIce(p,world),oldVX=ride?.vx||0;
+  const hits=advanceIce(world,p,dt);
+  const jump=!!input.jump&&p.controlLock<=0&&p.hitStop<=0;
+  if(ride){
+    if(jump)p.vx+=ride.vx-oldVX;
+    else {p.x+=ride.delta;p.vx-=oldVX;}
+  }
+  p.relativeIce=ride&&!jump?ride.id:null;
+  stepCore(p,input,world,dt);
+  p.relativeIce=null;
+  if(ride&&!jump)p.vx+=ride.vx;
+  const landed=riddenIce(p,world);
+  p.platformVX=landed?.vx||0;
+  if(landed&&landed!==ride&&Math.abs(p.vx-landed.vx)<180)p.vx=landed.vx;
+  if(hits.length)resolveImpacts(p,hits,[...p.contacts,...hits.map(h=>h.key)]);
+}
+function stepCore(p,input,level,dt) {
   p.event=null;p.waterSoundEvent=null;p.hit=null;p.reaction=null;p.impactEffect=null;
   if(level.depthCharge===false){p.maxDepth=0;p.energy=0;p.boosting=false;p.lastCharge=0;}
   if(!p.levelId&&level.id)p.levelId=level.id;
@@ -170,6 +190,18 @@ export function step(p,input,level,dt) {
   if(p.hitStop>0){p.slideDriveTime=0;p.slideDriveDirection=0;p.hitStop=Math.max(0,p.hitStop-dt);return;}
   if(p.pendingKnockback){
     p.vx=p.pendingKnockback.vx;p.vy=p.pendingKnockback.vy;p.pendingKnockback=null;
+  }
+  // Alpha edges and moving surfaces can leave a tiny initial overlap. Sweeping
+  // from inside otherwise blocks both axes, including movement away from ice.
+  const shapes=level.solids.filter(hasShape);
+  const overlaps=(x,y)=>shapes.some(s=>shapeOverlap(s,{left:x-CONFIG.radius,right:x+CONFIG.radius,top:y-CONFIG.halfHeight,bottom:y+CONFIG.halfHeight}));
+  const onTop=p.grounded&&shapes.some(s=>p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5);
+  if(!onTop&&overlaps(p.x,p.y)){
+    escape:for(let distance=.5;distance<=32;distance+=.5){
+      for(const [dx,dy] of [[-distance,0],[distance,0],[0,-distance],[0,distance]]){
+        if(!overlaps(p.x+dx,p.y+dy)){p.x+=dx;p.y+=dy;p.grounded=false;break escape;}
+      }
+    }
   }
   const recovering=p.controlLock>0;
   p.controlLock=Math.max(0,p.controlLock-dt);
@@ -223,8 +255,9 @@ export function step(p,input,level,dt) {
     const entering=p.vy*t.x-p.vx*t.y>=0;
     const paintedTop=!hasShape(s)||shapeOverlap(s,{left:p.x-CONFIG.radius,right:p.x+CONFIG.radius,top:top-1,bottom:top+3});
     if(paintedTop&&(follow||(entering&&oldY+CONFIG.halfHeight<=top+5&&p.y+CONFIG.halfHeight>=top))){
-      impact(`solid:${index}:top`,Math.max(0,incoming.vy*t.x-incoming.vx*t.y),t.y,-t.x,
-        {kind:'landing',angle:landingAngle(incoming.vx,incoming.vy,t.x,t.y)});
+      const contactVX=incoming.vx-(s.id===p.relativeIce?0:s.vx||0);
+      impact(`solid:${index}:top`,Math.max(0,incoming.vy*t.x-contactVX*t.y),t.y,-t.x,
+        {kind:'landing',angle:landingAngle(contactVX,incoming.vy,t.x,t.y)});
       p.y=top-CONFIG.halfHeight;
       const speed=p.vx*t.x+p.vy*t.y;p.vx=speed*t.x;p.vy=speed*t.y;p.grounded=true;
     }else if(hasShape(s)){
@@ -234,7 +267,7 @@ export function step(p,input,level,dt) {
       const hit=shapeSweep(s,'y',oldY,p.y,p.x,CONFIG.radius,CONFIG.halfHeight);
       if(hit){
         const down=p.y>oldY;
-        impact(`solid:${index}:${down?'top':'bottom'}`,Math.abs(p.vy),0,down?-1:1,down?{kind:'landing',angle:landingAngle(incoming.vx,incoming.vy)}:{});
+        impact(`solid:${index}:${down?'top':'bottom'}`,Math.abs(p.vy),0,down?-1:1,down?{kind:'landing',angle:landingAngle(incoming.vx-(s.id===p.relativeIce?0:s.vx||0),incoming.vy)}:{});
         p.y=hit.position;p.vy=0;p.grounded=down;
       }
     }else if(p.vy<0&&oldY-CONFIG.halfHeight>=s.bottom-2&&p.y-CONFIG.halfHeight<s.bottom){

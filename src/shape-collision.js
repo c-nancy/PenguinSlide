@@ -22,6 +22,7 @@ function columnsFor(s){
   cache.set(s,columns);return columns;
 }
 export function shapeOverlap(s,box){
+  if(s.localShape){const dx=s.x1-s.localShape.x1,dy=s.y1-s.localShape.y1;return shapeOverlap(s.localShape,{left:box.left-dx,right:box.right-dx,top:box.top-dy,bottom:box.bottom-dy});}
   if(box.right<=s.x1||box.left>=s.x2||box.top>=s.bottom||box.bottom<=Math.min(s.y1,s.y2))return false;
   const columns=columnsFor(s),start=Math.max(0,Math.floor((box.left-s.x1)/cell)),end=Math.min(columns.length,Math.ceil((box.right-s.x1)/cell));
   for(let i=start;i<end;i++)for(const [top,bottom] of columns[i].runs)

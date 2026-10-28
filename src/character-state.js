@@ -9,7 +9,8 @@ export function characterMotion(p,time,menu=false){
   if(!menu&&p.grounded&&!state.grounded)state.landAt=time;
   if(!p.grounded||p.wet||menu)state.landAt=-Infinity;
   state.grounded=p.grounded;
-  const speed=Math.abs(p.vx),landAge=time-state.landAt;
+  const relativeVX=p.vx-(p.grounded&&!p.wet?(p.platformVX||0):0);
+  const speed=Math.abs(relativeVX),landAge=time-state.landAt;
   if(p.grounded&&!p.wet&&!menu){
     // Separate rest/step thresholds keep tiny residual motion from restarting the walk.
     const standing=speed<12||(state.gait==='idle'&&speed<18);
@@ -18,7 +19,7 @@ export function characterMotion(p,time,menu=false){
   const pose=menu?'idle':p.wet?'swim':p.rockTrip&&!p.grounded?'landing':p.forceSlide>0?'slide':p.grounded?(landAge<.44?'landing':state.gait):'landing';
   // Accumulate only the new interval: multiplying the whole game clock by a
   // changing speed would jump between frames. HUD reads at the same time add zero.
-  if(pose==='walk'&&state.pose==='walk')state.walkTime+=Math.max(0,time-state.time)*Math.hypot(p.vx,p.vy||0)/90;
+  if(pose==='walk'&&state.pose==='walk')state.walkTime+=Math.max(0,time-state.time)*Math.hypot(relativeVX,p.vy||0)/90;
   state.time=time;state.pose=pose;
   let facing=p.facing===-1?-1:1,swimTilt=0;
   if(pose==='swim'){
