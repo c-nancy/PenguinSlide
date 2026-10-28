@@ -28,7 +28,7 @@ export const SECOND_TUTORIAL=chapter(0,'在巢边歇一歇','bay',[
   block(2000,2450,320,340,'floe',580),
   block(2900,3300,340,390,'ramp'),block(4800,5700,260,320,'finish')
 ],[[1500,2900],[3300,4800]],[900],5500,{
-  entry:'在巢边歇一歇，再往深一点的海里去。',mid:'有人守着岸边，也有人等你回来。',
+  entry:'在巢边歇一歇，再往深一点的海里去。',mid:'有人留在岸边，也有人想去更远的地方。',
   exit:'原来，向下的路也能把你送得更高。',transition:'现在，沿着海湾出发。'
 },{id:'tutorial-2',tutorial:true,initialHealth:60,bottom:1040,checkpointActivationBefore:0,
   keyHints:[
@@ -41,54 +41,63 @@ export const SECOND_TUTORIAL=chapter(0,'在巢边歇一歇','bay',[
 });
 
 export const STORY_LEVELS=[
-  chapter(1,'向海而行','coast',[
+  chapter(1,'浮冰远行','ridge',[
     block(-100,660,260,380),block(1040,1250,322,322,'floe',480),
-    block(1750,2200,300,300,'checkpoint'),block(3500,4800,220,310,'finish')
-  ],[[660,1750],[2200,3500]],[1980],4500,{
-    entry:'入冬前，把这封信送到海湾那头。',mid:'第一盏灯，照着离岸的路。',
-    exit:'岬角信标亮着。海湾就在脚下。',transition:'沿着海湾，下一盏灯还很远。'
-  },{decorations:[{kind:'signpost',x:300,y:323,w:65,h:60}]}),
-  chapter(2,'浮冰之间','bay',[
-    block(-100,600,260,380),block(950,1200,320,320,'floe',520),block(1460,1690,410,410,'floe',610),
-    block(2200,2640,300,300,'checkpoint'),block(2900,3630,250,250,'tunnel',560),
-    block(4200,4650,300,300,'checkpoint'),block(5100,5600,470,470,'tunnel',700),block(6300,7200,320,300,'finish')
-  ],[[600,2200],[2640,4200],[4650,6300]],[2400,4420],6920,{
-    entry:'浮冰之间，留着一条熟悉的水路。',mid:'这些路标，每年都会有人扶正。',
-    exit:'石滩上，有一串小小的脚印。',transition:'岸上的脚印，朝山口去了。'
-  },{decorations:[{kind:'buoy',x:730,y:379,w:55,h:74},{kind:'signpost',x:2480,y:300,w:60,h:55}]}),
-  chapter(3,'顺着冰走','ridge',[
-    block(-100,560,250,380),block(1900,2800,230,340,'ramp'),block(2800,3250,340,270,'ridge'),block(3250,3550,270,310,'ridge'),
-    block(5000,5450,260,300,'checkpoint'),block(6100,6500,240,280,'floe',430),block(6850,7600,330,300,'finish')
-  ],[[560,1900],[3550,5000],[5450,6850]],[2620,5230],7300,{
-    entry:'把水里的力气，交给脚下的冰。',mid:'有些路，顺着走就会轻一点。',
-    exit:'山口之外，终于看见那座灯塔。',transition:'从冰层下面，绕过去。'
-  },{decorations:[]}),
-  chapter(4,'冰层之下','cave',[
-    block(-100,600,300,380),block(780,1760,200,200,'tunnel',650),block(2300,2780,280,280,'checkpoint'),
-    block(3060,3650,190,190,'tunnel',670),block(4150,4400,720,720,'shelf'),block(4300,4650,240,240,'floe',460),
-    block(5100,5580,300,300,'checkpoint'),block(5850,6380,210,210,'tunnel',670),block(7200,8400,220,320,'finish')
-  ],[[600,2300],[2780,5100],[5580,7200]],[2520,5340],8100,{
-    entry:'灯暂时看不见了，路还在冰层下面。',mid:'看不见灯的时候，路也没有消失。',
-    exit:'从冰缝跃出，海面重新铺开。',transition:'这一次，灯就在前面。'
-  },{decorations:[{kind:'cave-arch',x:650,y:370,w:140,h:190},{kind:'ice-cracks',x:3550,y:370,w:100,h:140}]}),
-  chapter(5,'灯塔来信','home',[
-    block(-100,700,260,380),block(1250,1470,350,350,'floe',510),block(2400,2900,300,300,'checkpoint'),
-    block(3900,4180,320,320,'floe',610),block(4700,5750,240,330,'ramp'),block(5750,6100,330,300,'ridge'),
-    block(6700,8000,330,260,'finish')
-  ],[[700,2400],[2900,4700],[6100,6700]],[2610,5530],7680,{
-    entry:'那扇亮着灯的门，已经能看清了。',mid:'这一段，脚下的路已经很熟悉。',
-    exit:'我到了。一路上，灯都还亮着。',transition:''
-  },{decorations:[{kind:'buoy',x:890,y:380,w:55,h:74},{kind:'signpost',x:5700,y:321,w:64,h:58}]})
+    block(1750,2200,300,300,'checkpoint'),
+    block(2200,3000,300,360,'ramp'),block(3000,3300,360,300,'ridge'),block(3300,3550,300,380,'ramp'),
+    block(5000,5450,260,300,'checkpoint'),block(6100,6500,240,280,'floe',430),
+    block(6850,7250,330,380,'ramp'),block(7250,7600,380,330,'finish')
+  ],[[660,1750],[3550,5000],[5450,6850]],[1980,5230],7300,{
+    entry:'它主动离开了企鹅群，想去看看大海的另一边。',
+    mid:'岸边有人守着巢。歇一歇，再把水里的速度交给脚下的冰。',
+    exit:'越过浮冰和山口，灯塔出现在远处。',transition:'前面的海路，藏在冰层下面。'
+  },{goal:{x:7330,y:surfaceAt(block(7250,7600,380,330),7330),kind:'shore'},
+    decorations:[{kind:'signpost',x:300,y:315,w:65,h:60}]}),
+  chapter(2,'穿冰见光','cave',[
+    block(-100,600,300,380),block(780,1760,200,200,'tunnel',650),
+    block(2300,2780,280,320,'checkpoint'),block(3060,3650,190,190,'tunnel',670),
+    block(4150,4400,720,720,'shelf'),block(4300,4650,240,240,'floe',460),
+    block(5100,5580,300,340,'checkpoint'),
+    block(6680,7730,240,330,'ramp'),block(7730,8080,330,300,'ridge'),
+    block(8680,9200,330,380,'ramp'),block(9200,9980,380,300,'finish')
+  ],[[600,2300],[2780,5100],[5580,6680],[8080,8680]],[2520,5340],9660,{
+    entry:'灯暂时看不见了。顺着冰层下的水路，寻找透进来的光。',
+    mid:'看不见灯的时候，路也没有消失。巢边的脚印仍然朝前。',
+    exit:'灯塔就在岸边，大海还伸向看不见的地方。',transition:'沿着清晨的海湾，继续向前。'
+  },{goal:{x:9690,y:surfaceAt(block(9200,9980,380,300),9690),kind:'lighthouse'},
+    openSeaFrom:5580,decorations:[{kind:'cave-arch',x:650,y:370,w:140,h:190},
+      {kind:'ice-cracks',x:3550,y:370,w:100,h:140},{kind:'buoy',x:5780,y:380,w:55,h:74}]}),
+  chapter(3,'顺流而下','bay',[
+    block(-100,350,300),block(350,700,300,395,'ramp'),
+    block(2600,3050,395,350,'ramp'),block(3050,3250,350,350,'checkpoint'),block(3250,3400,350,395,'ramp'),
+    block(5400,5850,395,350,'ramp'),block(5850,6150,350,350,'checkpoint'),block(6150,6300,350,395,'ramp'),
+    block(8600,9050,395,350,'ramp'),block(9050,9350,350,350,'checkpoint'),block(9350,9500,350,395,'ramp'),
+    block(12000,12650,395,330,'ramp'),block(12650,13200,330,330,'finish')
+  ],[[700,2600],[3400,5400],[6300,8600],[9500,12000]],[3150,6000,9200],12900,{
+    entry:'灯塔留在身后，大海的另一边还在前方。',mid:'原来，海水也会送你一程。',
+    exit:'海湾留在身后，更远的海仍在前方。',transition:''
+  },{bottom:1040,goal:{x:12930,y:330,kind:'lighthouse'},
+    currents:[
+      {x1:1000,x2:1700,y1:430,y2:600,speed:220,blend:65},
+      {x1:3650,x2:4450,y1:430,y2:590,speed:320,blend:65},
+      {x1:6800,x2:7600,y1:400,y2:620,speed:-400,blend:65},
+      {x1:9900,x2:10900,y1:430,y2:590,speed:380,blend:65}
+    ],
+    flowFish:[{x1:870,x2:1900,y1:515,y2:515,speed:75},
+      {x1:6500,x2:6750,y1:520,y2:730,speed:45},
+      {x1:6750,x2:7850,y1:730,y2:730,speed:70},
+      {x1:7850,x2:8100,y1:730,y2:520,speed:45}],
+    storyNotices:[{id:'chapter-3:departure',x1:0,x2:450,text:'大海的另一边，还在前方。'},
+      {id:'chapter-3:current',x1:3050,x2:3240,text:'原来，海水也会送你一程。'}],
+    decorations:[{kind:'buoy',x:820,y:380,w:55,h:74}]})
 ];
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
-// Shore wildlife is kept out of tutorials and the cave interior.
+// Wildlife stays clear of nests and the cave interior.
 const birdPerches=[
-  [[460,'petrel',25],[1150,'skua',29],[3950,'albatross',34]],
-  [[1060,'petrel',25],[6530,'petrel',25]],
-  [[2200,'albatross',34],[3110,'skua',29],[7050,'petrel',25]],
-  [[380,'petrel',25],[7660,'skua',29]],
-  [[410,'skua',29],[1350,'petrel',25],[4930,'albatross',34],[7140,'albatross',34]]
+  [[460,'petrel',25],[3110,'skua',29],[7050,'albatross',34]],
+  [[380,'petrel',25],[7470,'skua',29],[9130,'albatross',34]],
+  [[320,'petrel',25],[5750,'skua',29],[12700,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
   level.birds=birdPerches[index].map(([x,species,height])=>{

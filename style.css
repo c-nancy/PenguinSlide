@@ -173,19 +173,20 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .health-fish{transform:rotate(-18deg);transform-origin:center}
 .health-fish-track{padding:3px 0}
 
-/* Short completion content still needs a full, undistorted cloud. */
-.game-frame[data-mode=chapter-complete] .dialog{width:min(620px,90%);aspect-ratio:1657/949;border:0;padding:50px 40px 34px;background-size:contain;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.game-frame[data-mode=chapter-complete] #dialog-kicker{display:block;margin:0 0 24px;letter-spacing:1px}
-.game-frame[data-mode=chapter-complete] #resume{display:block;margin:0}
+/* Compact paper acknowledgement modal. */
+.game-frame[data-mode=chapter-complete] .dialog{width:min(600px,94%);aspect-ratio:1657/949;max-height:96%;border:0;padding:48px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;background-size:100% 100%}
+.game-frame[data-mode=chapter-complete] #dialog-kicker{display:block;font-size:12px;line-height:1.5;letter-spacing:1px}
+.game-frame[data-mode=chapter-complete] #resume{flex:none;margin:0}
 .game-frame[data-mode=chapter-complete] .dialog-actions{display:none}
-@media(max-width:550px){.game-frame[data-mode=chapter-complete] .dialog{padding:32px 22px 20px}.game-frame[data-mode=chapter-complete] #dialog-kicker{margin-bottom:16px;font-size:9px}}
+@media(max-width:550px){.game-frame[data-mode=chapter-complete] .dialog{padding:28px 24px;gap:14px}.game-frame[data-mode=chapter-complete] #dialog-kicker{font-size:11px}}
 
-.game-frame[data-mode=chapter-complete] #dialog-kicker{font-size:18px;line-height:1.5;letter-spacing:1px}
-@media(max-width:550px){.game-frame[data-mode=chapter-complete] #dialog-kicker{font-size:14px}}
-
-/* Final completion shares the clear vertical layout of chapter completion. */
-.game-frame[data-mode=finished] .dialog{width:min(620px,90%);max-width:620px;aspect-ratio:1657/949;border:0;padding:60px 40px 36px;background-size:contain;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-.game-frame[data-mode=finished] #dialog-kicker{display:block;margin:0 0 24px;font-size:18px;line-height:1.5;letter-spacing:1px}
-.game-frame[data-mode=finished] #resume{display:block;margin:0}
-.game-frame[data-mode=finished] .dialog-actions{margin-top:18px}
-@media(max-width:550px){.game-frame[data-mode=finished] .dialog{width:94%;padding:38px 24px 24px}.game-frame[data-mode=finished] #dialog-kicker{font-size:14px;margin-bottom:16px}.game-frame[data-mode=finished] .dialog-actions{margin-top:12px}}
+.credits{margin:16px auto 0;text-align:center;color:var(--graphite);font-size:12px}
+.credits-link{padding:6px 10px;border:0;background:transparent;color:inherit;opacity:.75;font:inherit;cursor:pointer}
+.credits-link:hover{opacity:1;text-decoration:underline;text-underline-offset:4px}
+.credits-popup{box-sizing:border-box;width:min(640px,calc(100% - 32px));max-height:calc(100dvh - 40px);margin:auto;padding:24px 28px;border:1px solid #7b7a6866;border-radius:12px;background:#f5f0e5;color:var(--graphite);box-shadow:0 14px 50px #292b2426;text-align:left;font-size:12px;line-height:1.8;overflow:auto}
+.credits-popup::backdrop{background:#282b2440}
+.credits-popup h2{margin:0 28px 12px 0;font-size:16px;font-weight:600;letter-spacing:1px}
+.credits-popup p{margin:4px 0}.credits-popup a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.credits-close{position:absolute;right:14px;top:12px;width:32px;height:32px;padding:0;border:0;background:transparent;color:inherit;font-size:24px;cursor:pointer}
+.credits-link:focus-visible,.credits-popup a:focus-visible,.credits-close:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+@media(max-width:550px){.credits{margin-top:10px}.credits-popup{padding:20px;font-size:12px}}

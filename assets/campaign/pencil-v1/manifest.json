@@ -147,7 +147,7 @@
         "x": 0.5,
         "y": 1
       },
-      "groundFootY": 0.9736328125,
+      "groundFootY": 0.978515625,
       "category": "checkpoint-characters"
     },
     {
@@ -164,7 +164,7 @@
         "x": 0.5,
         "y": 1
       },
-      "groundFootY": 0.9755859375,
+      "groundFootY": 0.98046875,
       "category": "checkpoint-characters"
     }
   ]

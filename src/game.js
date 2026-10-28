@@ -1,3 +1,4 @@
+import {emitRing,updateRings} from './bubble-rings.js';
 import { LEVELS } from './levels.js';
 import { CONFIG, createPlayer, step, resetPlayer, remainingCharge } from './physics.js';
 import { render, resetPose } from './render.js';
@@ -5,22 +6,35 @@ import { HEALTH } from './health.js';
 import {createHealthHUD} from './health-hud.js';
 import { loadArt } from './art.js';
 import {addImpactEffect} from './impact-effects.js';
+import {createAmbientBubbles,updateAmbientBubbles} from './ambient-bubbles.js';
 import {snowCapStrip} from './snow-cap-ends.js';
 import { loadProgress, saveProgress, completeChapter, selectChapter } from './campaign.js';
 import { createNotices } from './narrative.js';
 import {characterMotion,groundMotionLabel} from './character-state.js';
-import {cameraY} from './camera.js';
+import {cameraY,constrainCameraY} from './camera.js';
 import {dismissTutorialKey} from './tutorial-guidance.js';
 import {createHealingFeedback} from './healing-feedback.js';
 import {createBirds,updateBirds} from './birds.js';
+import {createMusic} from './music.js';
+import {createWaterSound} from './water-sound.js';
 
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),frameElement=document.querySelector('.game-frame');
 const updateHealthFish=createHealthHUD($('health-meter'));
 let storage;try{storage=window.localStorage;}catch{/* A private session can still play. */}
+const music=createMusic(new Audio(),storage);
+const waterSound=createWaterSound();
+waterSound.prepare();
+function updateMusicButton(){
+  $('music').textContent=music.enabled?'♫':'♪';
+  $('music').setAttribute('aria-label',music.enabled?'关闭背景音乐':'开启背景音乐');
+  $('music').setAttribute('aria-pressed',String(music.enabled));
+  $('music').title=music.enabled?'关闭背景音乐':'开启背景音乐';
+}
+$('music').onclick=()=>{music.toggle();updateMusicButton();};updateMusicButton();
 let progress=loadProgress(storage,LEVELS.length),chapter=progress.current,level=LEVELS[chapter];
 let p=createPlayer(level.start.x,level.start.y);
-const state={p,cam:{x:p.x-410,y:cameraY(level,p)},birds:createBirds(level),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
+const state={rings:[],p,cam:{x:p.x-410,y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(level),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const healingFeedback=createHealingFeedback(canvas,$('health-meter'),()=>reducedMotion.matches);
 const keys=new Set();
@@ -28,12 +42,12 @@ let last=0,accumulator=0,jumpQueued=false,elapsed=0,started=false,chaptersReturn
 let transitioning=false,artReady=false,transitionInterrupted=false;
 const notices=createNotices(id=>{if(id&&!progress.seenStory.includes(id)){progress={...progress,seenStory:[...progress.seenStory,id]};persist();}});
 function persist(){saveProgress(storage,progress);}
-function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
+function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;music.setMode(mode);waterSound.setMode(mode);frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
 function focusGame(){canvas.focus({preventScroll:true});}
 function clearInput(){keys.clear();jumpQueued=false;accumulator=0;}
-function clearEffects(){healingFeedback.clear();state.birds=createBirds(level);state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
+function clearEffects(){state.rings=[];waterSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(level);state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
-function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=show;}
+function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=true;}
 function play(){
   if(!artReady||transitioning)return;
   if(p.dead){dialog('dead');return;}
@@ -42,7 +56,7 @@ function play(){
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与五章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=`两段练习与三章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){
@@ -56,12 +70,12 @@ function dialog(kind){
   $('dialog-text').hidden=kind!=='dead';
   $('dialog-kicker').hidden=kind==='chapters';
   $('chapter-story').textContent=[level.story.entry,level.story.mid,level.story.exit].filter(Boolean).join('\n');
-  const titles={dead:'歇一歇，再出发。',finished:'信已送到，灯还亮着。',paused:'歇一会儿',chapters:'沿着海湾，一站一站', 'chapter-complete':`${level.title} · 已走过`};
+  const titles={dead:'歇一歇，再出发。',finished:'旅程暂歇，大海仍在前方。',paused:'歇一会儿',chapters:'沿着海湾，一站一站', 'chapter-complete':`${level.title} · 已走过`};
   $('dialog-kicker').textContent=kind==='paused'?`${chapter+1}/${LEVELS.length}`:['chapter-complete','finished','dead'].includes(kind)?`${chapter+1}/${LEVELS.length}·${level.title}`:kind==='chapters'?'先熟悉脚下，再走向海湾':`第 ${chapter+1} 站 / ${LEVELS.length} · ${level.title}`;
   $('dialog-title').textContent=titles[kind];
   const texts={
     dead:'生命值已耗尽。这次从本章起点重新出发。',
-    finished:`${level.story.exit}\n门内透出暖光，信已安稳放在门边。谢谢你陪它走完这段旅程。`,
+    finished:`${level.story.exit}\n这段旅程暂时走到这里，更远的海，留给下一次出发。`,
     paused:'冰海会在这里等你。',
     chapters:'海湾的路，一站一站留在这里。',
     'chapter-complete':`${level.story.exit}\n${level.story.transition||''}`
@@ -92,6 +106,8 @@ function openChapters(){if(!artReady||transitioning||state.mode==='chapters')ret
 function restore(kind){if(kind==='menu')menu();else if(kind==='playing')play();else dialog(kind);}
 async function enterChapter(index){
   if(!artReady||transitioning||index>progress.unlocked||!LEVELS[index])return;
+  music.setMode('transition');music.unlock();
+  waterSound.unlock();
   transitioning=true;transitionInterrupted=false;setMode('transition');clearInput();hideNotice();
   $('overlay').hidden=true;hud(false);$('scene-caption').hidden=true;
   const curtain=$('chapter-transition');curtain.hidden=false;
@@ -102,7 +118,7 @@ async function enterChapter(index){
     clearEffects();notices.clear();state.time=0;elapsed=0;
     state.cam={x:Math.max(-120,Math.min(level.width-1160,p.x-410)),y:cameraY(level,p)};
     setMode('transition');
-    $('route-end').setAttribute('aria-label',chapter===LEVELS.length-1?'终点旗子：归航灯塔':'终点旗子：下一站');
+    $('route-end').setAttribute('aria-label',chapter===LEVELS.length-1?'当前旅途暂止：灯塔':'终点旗子：下一站');
     if(!reducedMotion.matches)await curtain.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards',easing:'ease-in'}).finished;
   }finally{
     curtain.getAnimations().forEach(animation=>animation.cancel());curtain.hidden=true;transitioning=false;clearInput();play();
@@ -125,6 +141,8 @@ $('start').onclick=()=>enterChapter(chapter);
 $('chapters').onclick=openChapters;$('intro-chapters').onclick=openChapters;$('dialog-chapters').onclick=openChapters;
 $('pause').onclick=()=>{if(transitioning)return;if(state.mode==='playing')dialog('paused');else if(state.mode==='paused')play();};
 $('resume').onclick=()=>{
+  music.unlock();
+  waterSound.unlock();
   if(state.mode==='dead')enterChapter(chapter);
   else if(state.mode==='chapter-complete')enterChapter(chapter+1);
   else if(state.mode==='finished')enterChapter(0);
@@ -133,7 +151,17 @@ $('resume').onclick=()=>{
 };
 $('restart').onclick=()=>enterChapter(chapter);$('replay').onclick=()=>enterChapter(0);$('retry').onclick=retry;
 const handled=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyA','KeyD','KeyW','KeyS','KeyR','Escape']);
+$('credits-open').onclick=()=>{
+  if(state.mode==='playing')dialog('paused');
+  if(!$('credits').open)$('credits').showModal();
+};
+$('credits-close').onclick=()=>$('credits').close();
+$('credits').addEventListener('click',event=>{
+  const bounds=$('credits').getBoundingClientRect();
+  if(event.target===$('credits')&&(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom))$('credits').close();
+});
 window.addEventListener('keydown',e=>{
+  if($('credits').open||e.target instanceof Element&&e.target.closest('.credits'))return;
   if(transitioning){e.preventDefault();return;}
   if(e.code==='Tab'&&!$('overlay').hidden&&state.mode!=='menu'){
     const buttons=[...$('dialog').querySelectorAll('button:not(:disabled)')].filter(button=>button.getClientRects().length);
@@ -151,6 +179,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyR'&&!e.repeat){retry();return;}
   const freshPress=!keys.has(e.code)&&!e.repeat;
   if(freshPress)dismissTutorialKey(level,p,e.code);
+  if(e.code==='Space'&&p.wet){if(freshPress)emitRing(state.rings,p,characterMotion(p,state.time),state.time);return;}
   keys.add(e.code);if(freshPress&&['Space','ArrowUp','KeyW'].includes(e.code))jumpQueued=true;
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
@@ -176,9 +205,11 @@ function update(dt){
   if(state.mode!=='playing')return;
   state.time+=dt;
   elapsed+=dt;effectTick++;
-  const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||keys.has('Space')),jump:jumpQueued};jumpQueued=false;
-  const healthBefore=p.health;
+  const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space'))),jump:jumpQueued};jumpQueued=false;
+  const healthBefore=p.health,previous={x:p.x,y:p.y};
   step(p,input,level,dt);
+  updateRings(state.rings,level,dt);
+  updateAmbientBubbles(state.ambientBubbles,p,previous,state.time);
   updateBirds(state.birds,p,dt);
   if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
   state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);
@@ -189,6 +220,7 @@ function update(dt){
   if(p.reaction&&!p.hit){state.shake=.18;}
   if(p.event==='splash')burst('water');
   if(p.event==='breach'){burst('water',36);}
+  waterSound.play(p.waterSoundEvent);
   if(p.event==='checkpoint'){
     burst('gold',24);
     updateHealthFish(p.health);healingFeedback.play(p,state.cam,healthBefore);
@@ -206,6 +238,7 @@ function update(dt){
   const targetX=Math.max(-120,Math.min(level.width-1160,p.x-410+p.vx*.18));
   const targetY=cameraY(level,p);
   const ease=1-Math.exp(-4*dt);state.cam.x+=(targetX-state.cam.x)*ease;state.cam.y+=(targetY-state.cam.y)*ease;
+  state.cam.y=constrainCameraY(level,p,state.cam.y);
 }
 function updateHUD(){
   $('health-value').textContent=p.health+' / '+HEALTH.max;

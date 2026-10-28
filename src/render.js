@@ -1,3 +1,5 @@
+import {drawRings} from './bubble-rings.js';
+import {drawAmbientBubbles} from './ambient-bubbles.js';
 import {drawDizzyEffect} from './dizzy-effect.js';
 import {drawImpactEffects} from './impact-effects.js';
 import {CONFIG,remainingCharge} from './physics.js';
@@ -5,6 +7,7 @@ import {surfaceAt} from './level.js';
 import {drawSprite,animationFrame,surfaceTransform} from './art.js';
 import {characterMotion} from './character-state.js';
 import {drawEnergyBubbles} from './energy-bubbles.js';
+import {drawCurrents} from './current-art.js';
 import {drawGroundedSprite} from './grounded-art.js';
 import {drawCheckpointFamily} from './checkpoint-family.js';
 import {SNOW_CAP} from './snow-cap.js';
@@ -113,22 +116,28 @@ function landmarks(c,art,level,cam,p,mode){
     // Keep the porch over the goal, but ground the whole rock foundation.
     c.save();const glow=c.createRadialGradient(x,y-30,2,x,y-30,90);glow.addColorStop(0,'#d6b66a55');glow.addColorStop(1,'#d6b66a00');c.fillStyle=glow;c.fillRect(x-90,y-120,180,180);c.restore();
     drawGroundedSprite(c,art,'home-lighthouse',level,cam,goal.x,goal.y,290,310,.78);
-    if(mode==='finished')drawGroundedSprite(c,art,'envelope',level,cam,goal.x+45,goal.y,42,28);
   }else if(goal.kind==='beacon')drawGroundedSprite(c,art,'lighthouse',level,cam,goal.x,goal.y,104,158);
   else if(goal.kind==='shore')drawGroundedSprite(c,art,'finish-flag',level,cam,goal.x+50,goal.y,62,76);
   else if(goal.kind==='cave-exit')drawGroundedSprite(c,art,'finish-flag',level,cam,goal.x+45,goal.y,62,76);
 }
 function scenery(c,art,level,cam,sy){
-  const theme=level.theme||'coast',url=art.backgrounds?.get(theme)||art.ENV+'coast-background.png';
   const width=Math.max(1800,W+level.width*.07),height=width*1024/1536;
-  // Every backdrop has a 72% horizon; foreground surfaces remain physics geometry.
-  if(theme==='cave'){
-    c.save();c.globalAlpha=.72;c.drawImage(art.images.get(url),-cam.x*.07,-120-cam.y*.12,width,960);c.restore();
-  }else c.drawImage(art.images.get(url),-cam.x*.07,sy-height*.72,width,height);
-  if(theme==='ridge'||theme==='home'){
-    // Anchor the distant lighthouse to the backdrop shoreline, not the sky.
-    const size=theme==='home'?60:36,x=1040-cam.x*.025,y=sy+2;
-    c.save();c.globalAlpha=theme==='home'?.64:.42;drawSprite(c,art,'home-lighthouse',x,y-size,size*.94,size);c.restore();
+  const seaBlend=level.openSeaFrom===undefined?0:Math.max(0,Math.min(1,(cam.x+W*.45-level.openSeaFrom)/700));
+  const backdrop=(theme,opacity)=>{
+    if(opacity<=0)return;
+    const url=art.backgrounds?.get(theme)||art.ENV+'coast-background.png';
+    c.save();c.globalAlpha=opacity*(theme==='cave'?.72:1);
+    if(theme==='cave')c.drawImage(art.images.get(url),-cam.x*.07,-120-cam.y*.12,width,960);
+    else c.drawImage(art.images.get(url),-cam.x*.07,sy-height*.72,width,height);
+    c.restore();
+  };
+  const theme=level.theme||'coast';
+  backdrop(theme,1-seaBlend);backdrop('home',seaBlend);
+  if(theme==='ridge'||theme==='home'||seaBlend>0){
+    const home=theme==='home'||seaBlend>0;
+    const size=home?60:36,x=1040-cam.x*.025,y=sy+2;
+    c.save();c.globalAlpha=home?.64*(seaBlend||1):.42;
+    drawSprite(c,art,'home-lighthouse',x,y-size,size*.94,size);c.restore();
   }
 }
 export function render(c,state,level){
@@ -138,7 +147,10 @@ export function render(c,state,level){
   scenery(c,art,level,cam,sy);
   if(sy<H){
     c.save();c.beginPath();c.rect(0,Math.max(0,sy),W,H);c.clip();
-    c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),-cam.x*.045,sy,1580,level.bottom-level.waterY+160);
+    // The parallax image must still cover the screen at the far end of long levels.
+    const underwaterX=Math.min(0,-cam.x*.045);
+    const underwaterWidth=Math.max(1580,W+Math.max(0,level.width-1160)*.045+16);
+    c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),underwaterX,sy,underwaterWidth,level.bottom-level.waterY+160);
     c.globalAlpha=.45;
     for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=level.waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100){
       const id=['fish','fish-school-02','fish-school-03'][i%3],sprite=art.sprites.get(id)||art.sprites.get('fish');
@@ -147,7 +159,15 @@ export function render(c,state,level){
     }}
     c.restore();
   }
-  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
+  if(mode!=='menu'){
+    drawCurrents(c,art,level,cam,time);
+    c.save();c.beginPath();for(const [left,right] of level.waters)c.rect(left-cam.x,sy,right-left,Math.max(0,bed-sy));c.clip();
+    drawAmbientBubbles(c,art,state.ambientBubbles,cam,time);c.restore();
+  }
+  // The seabed is the bottom of the scene: fill beneath its transparent edge.
+  if(bed+40<H){c.fillStyle='#777267';c.fillRect(0,bed+40,W,H-(bed+40));}
+  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){
+    drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
     const index=((x/480)%3+3)%3,id=['kelp','kelp-02','kelp-03'][index],sprite=art.sprites.get(id)||art.sprites.get('kelp');
     const ratio=sprite?.rect?sprite.rect.w/sprite.rect.h:65/94,height=Math.min(94,96/ratio),width=height*ratio;
     drawSprite(c,art,sprite?.id||'kelp',x+92-cam.x-width/2,bed+2-height,width,height);
@@ -175,6 +195,7 @@ export function render(c,state,level){
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
   if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
+  drawRings(c,art,state.rings,cam);
   drawImpactEffects(c,art,state);
   if(p.wet&&mode==='playing'&&level.depthCharge!==false){
     drawEnergyBubbles(c,remainingCharge(p),p.x-cam.x,p.y-cam.y);

@@ -12,7 +12,7 @@
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="去远方首页"><span class="brand-icon">❄</span><span>去远方<small>TO DISTANT SHORES</small></span></a>
-      <nav aria-label="游戏工具"><button id="chapters" class="text-button">章节</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button></nav>
+      <nav aria-label="游戏工具"><button id="chapters" class="text-button">章节</button><button id="music" class="icon-button" aria-label="关闭背景音乐" aria-pressed="true" title="关闭背景音乐">♫</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button></nav>
     </header>
 
     <section class="game-frame" aria-label="企鹅横版闯关游戏">
@@ -30,19 +30,27 @@
       <div class="toast" id="toast" role="status" aria-live="polite"></div>
       <div class="overlay" id="overlay">
         <div class="intro" id="intro">
-          <span class="intro-kicker"><i></i> 一场关于勇气的小小冒险</span>
+          <span class="intro-kicker"><i></i> 一场出于好奇的旅行</span>
           <h1>向深蓝潜去，<br>向天空<span>跃起。</span></h1>
-          <p>入冬前，把这封信送到海湾那头。<br>沿着冰坡与路标，去找那盏归航的灯。</p>
+          <p>它主动离开了企鹅群，开始独自旅行。<br>它想去看看，大海的另一边。</p>
           <button class="primary-button" id="start">Start</button>
-          <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">两段练习与五章旅程 · 已走过 0 / 7 站</p>
+          <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">两段练习与三章旅程 · 已走过 0 / 5 站</p>
         </div>
         <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden><span class="eyebrow" id="dialog-kicker">TAKE A BREATH</span><h2 id="dialog-title">歇一会儿</h2><p id="dialog-text">冰海会在这里等你。</p><blockquote id="chapter-story" class="chapter-story" hidden></blockquote><div id="chapter-list" class="chapter-list" aria-label="旅程章节" hidden></div><button class="primary-button" id="resume">继续冒险 <span>→</span></button><div class="dialog-actions"><button class="dialog-restart" id="restart">重新开始本关</button><button class="dialog-restart" id="dialog-chapters">选择章节</button><button class="dialog-restart" id="replay">重玩整段旅程</button></div></div>
       </div>
       <div id="chapter-transition" class="chapter-transition" aria-hidden="true" hidden></div>
-      <div class="scene-caption" id="scene-caption"><span>南纬 66° · 浮冰海岸</span><i></i><span>下一站，远处的灯塔</span></div>
+      <div class="scene-caption" id="scene-caption" hidden><span>南纬 66° · 浮冰海岸</span><i></i><span>去看看大海的另一边</span></div>
     </section>
 
-    
+    <footer class="credits">
+      <button id="credits-open" class="credits-link" aria-haspopup="dialog">素材致谢</button>
+      <dialog id="credits" class="credits-popup" aria-labelledby="credits-title">
+        <button id="credits-close" class="credits-close" aria-label="关闭素材致谢" autofocus>×</button>
+        <h2 id="credits-title">素材致谢</h2>
+        <p>音乐：<a href="https://soundcloud.com/cleytonkauffman" target="_blank" rel="noopener noreferrer">Cleyton Kauffman</a>。音效：<a href="https://freesound.org/s/743910/" target="_blank" rel="noopener noreferrer">Alex_eapo</a>、<a href="https://freesound.org/s/212143/" target="_blank" rel="noopener noreferrer">qubodup</a> / <a href="https://freesound.org/s/195877/" target="_blank" rel="noopener noreferrer">blaukreuz</a>。</p>
+        <p>以上音频素材均标注为 <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener noreferrer">CC0</a>，感谢创作者分享。</p>
+      </dialog>
+    </footer>
   </main>
   <script type="module" src="./src/game.js"></script>
 </body>

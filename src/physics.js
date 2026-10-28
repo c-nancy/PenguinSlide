@@ -2,13 +2,14 @@ import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
 import {hasShape,shapeOverlap,shapeSweep} from './shape-collision.js';
 import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
+import {waterCurrentAt} from './currents.js';
 
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
   radius:17, halfHeight:22, gravity:1000, jump:300,
   groundThrust:220, groundBrakeThrust:420, slideRampTime:1, slideDriveGain:.12, iceFriction:.018, iceLinearDrag:.025, iceQuadraticDrag:.00075,
   standingFriction:.6,standingSpeed:18,
-  airControl:100, swimThrust:650, swimHorizontalThrust:4400, buoyancy:75,
+  airControl:100, swimThrust:650, swimHorizontalThrust:4400, swimStartThrust:1000, swimCruiseSpeed:1200, buoyancy:75,
   waterLinearDrag:.45, waterQuadraticDrag:.0024,
   airLinearDrag:.5, airQuadraticDrag:.0025,
   maxDepth:500, energyPerDepth:2500, boostAcceleration:2500
@@ -20,7 +21,7 @@ const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
 export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
   return {x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
-    facing:1,event:null,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
+    facing:1,event:null,waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
     forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
 export function checkpointsFor(level){return level.checkpoints|| (level.checkpoint?[level.checkpoint]:[]);}
@@ -57,7 +58,12 @@ function tangent(s) {
   return {x:1/length,y:slope/length};
 }
 function supportFor(p,level) {
-  return level.solids.find(s=>p.x>=s.x1&&p.x<=s.x2&&Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5);
+  // Landing accepts a foot box overlapping the edge, so support must use that
+  // same footprint. Otherwise an overhanging body can land without being able
+  // to walk or jump, and the painted slope blocks both movement axes.
+  const atFoot=s=>Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5;
+  return level.solids.find(s=>p.x>=s.x1&&p.x<=s.x2&&atFoot(s))||
+    level.solids.find(s=>hasShape(s)&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&atFoot(s));
 }
 function exposedSideTop(s,left,level){
   const x=left?s.x1:s.x2,y=left?s.y1:s.y2;
@@ -115,18 +121,29 @@ function moveOnIce(p,s,ix,dt) {
   speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-friction);
   p.vx=speed*t.x;p.vy=speed*t.y;
 }
-function moveFreely(p,ix,iy,immersion,depth,dt) {
+function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
   const inputLength=Math.hypot(ix,iy)||1;
-  const thrustX=ix/inputLength*CONFIG.swimHorizontalThrust;
+  // Build forward propulsion with swimming speed, keeping full thrust available
+  // for braking. Momentum carries across water entry; no timer or speed reset.
+  const relativeX=p.vx-flowX;
+  // Opposing water already increases relative speed while the penguin is at
+  // rest. Do not count most of that water motion as self-powered buildup.
+  const upstream=ix*flowX<0&&ix*p.vx>=0;
+  const propulsionSpeed=upstream?Math.max(0,Math.abs(relativeX)-.75*Math.abs(flowX)):Math.abs(relativeX);
+  const ramp=clamp(propulsionSpeed/CONFIG.swimCruiseSpeed,0,1);
+  const drive=ix*relativeX<0||iy<0?CONFIG.swimHorizontalThrust:
+    CONFIG.swimStartThrust+(CONFIG.swimHorizontalThrust-CONFIG.swimStartThrust)*ramp*ramp*(3-2*ramp);
+  const thrustX=ix/inputLength*drive;
   const thrustY=iy/inputLength*CONFIG.swimThrust;
   p.vx+=(ix*CONFIG.airControl*(1-immersion)+thrustX*immersion)*dt;
   p.vy+=(CONFIG.gravity*(1-immersion)+(thrustY-CONFIG.buoyancy)*immersion)*dt;
   // Blend both media through the waterline; airborne speed no longer survives
   // without resistance. The quadratic term especially damps fast breaches.
-  const speed=Math.hypot(p.vx,p.vy);
-  const drag=(CONFIG.waterLinearDrag+CONFIG.waterQuadraticDrag*speed)*immersion+
-    (CONFIG.airLinearDrag+CONFIG.airQuadraticDrag*speed)*(1-immersion);
-  p.vx/=1+drag*dt;p.vy/=1+drag*dt;
+  const waterSpeed=Math.hypot(p.vx-flowX,p.vy),airSpeed=Math.hypot(p.vx,p.vy);
+  const waterDrag=(CONFIG.waterLinearDrag+CONFIG.waterQuadraticDrag*waterSpeed)*immersion;
+  const airDrag=(CONFIG.airLinearDrag+CONFIG.airQuadraticDrag*airSpeed)*(1-immersion);
+  const damping=1+(waterDrag+airDrag)*dt;
+  p.vx=(p.vx+waterDrag*flowX*dt)/damping;p.vy/=damping;
 
   // Releasing the ascent key leaves only momentum, water resistance and buoyancy.
   p.boosting=p.wet&&iy<0&&p.energy>0;
@@ -142,7 +159,7 @@ function moveFreely(p,ix,iy,immersion,depth,dt) {
   }
 }
 export function step(p,input,level,dt) {
-  p.event=null;p.hit=null;p.reaction=null;p.impactEffect=null;
+  p.event=null;p.waterSoundEvent=null;p.hit=null;p.reaction=null;p.impactEffect=null;
   if(level.depthCharge===false){p.maxDepth=0;p.energy=0;p.boosting=false;p.lastCharge=0;}
   if(!p.levelId&&level.id)p.levelId=level.id;
   if(p.finished||p.dead)return;
@@ -177,7 +194,8 @@ export function step(p,input,level,dt) {
       p.vy=Math.min(p.vy,-CONFIG.jump);p.surfaceJumped=true;p.event='jump';
     }
     const immersion=waterColumn(p,level)?clamp((p.y+CONFIG.halfHeight-level.waterY)/(2*CONFIG.halfHeight),0,1):0;
-    moveFreely(p,ix,iy,immersion,p.y-level.waterY-(p.chargeFloor||0),dt);
+    moveFreely(p,ix,iy,immersion,p.y-level.waterY-(p.chargeFloor||0),dt,
+      immersion>0?waterCurrentAt(level,p.x,p.y):0);
   }
 
   const incoming={vx:p.vx,vy:p.vy};
@@ -200,7 +218,8 @@ export function step(p,input,level,dt) {
   for(const [index,s] of level.solids.entries()){
     if(p.x+CONFIG.radius<=s.x1||p.x-CONFIG.radius>=s.x2)continue;
     const top=surfaceAt(s,p.x),t=tangent(s);
-    const follow=groundMotion&&oldX>=s.x1&&oldX<=s.x2&&p.x>=s.x1&&p.x<=s.x2&&Math.abs(oldY+CONFIG.halfHeight-surfaceAt(s,oldX))<5;
+    const follow=groundMotion&&(hasShape(s)?support===s&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2:
+      oldX>=s.x1&&oldX<=s.x2&&p.x>=s.x1&&p.x<=s.x2&&Math.abs(oldY+CONFIG.halfHeight-surfaceAt(s,oldX))<5);
     const entering=p.vy*t.x-p.vx*t.y>=0;
     const paintedTop=!hasShape(s)||shapeOverlap(s,{left:p.x-CONFIG.radius,right:p.x+CONFIG.radius,top:top-1,bottom:top+3});
     if(paintedTop&&(follow||(entering&&oldY+CONFIG.halfHeight<=top+5&&p.y+CONFIG.halfHeight>=top))){
@@ -238,6 +257,19 @@ export function step(p,input,level,dt) {
     if(oldY>level.waterY&&p.y<=level.waterY&&p.vy<0){p.lastCharge=chargeForDepth(p.maxDepth);p.event='breach';}
     // The waterline changes forces and visuals, never velocity.
     p.maxDepth=0;p.energy=0;p.boosting=false;p.rechargePending=false;
+  }
+  // Sound follows first body contact with the waterline, rather than waiting
+  // for the centre to cross it. Keep physics/charge transitions unchanged.
+  if(p.y+CONFIG.halfHeight<level.waterY)p.waterEntrySounded=false;
+  if(p.y-CONFIG.halfHeight>level.waterY)p.waterExitSounded=false;
+  const surfaceWater=waterColumn(p,level);
+  const enteringWater=surfaceWater&&p.vy>0&&oldY+CONFIG.halfHeight<level.waterY&&p.y+CONFIG.halfHeight>=level.waterY;
+  const leavingWater=surfaceWater&&wasWet&&p.vy<0&&oldY-CONFIG.halfHeight>level.waterY&&p.y-CONFIG.halfHeight<=level.waterY;
+  if(!p.waterEntrySounded&&(enteringWater||p.event==='splash')){
+    p.waterSoundEvent='splash';p.waterEntrySounded=true;
+  }
+  if(!p.waterExitSounded&&(leavingWater||p.event==='breach')){
+    p.waterSoundEvent='breach';p.waterExitSounded=true;
   }
   if(wasWet&&incoming.vy<0&&impacts.some(hit=>hit.kind!=='landing'&&hit.speed>0)){
     restartCharge(p,level);
