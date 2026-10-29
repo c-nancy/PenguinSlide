@@ -98,7 +98,7 @@ function decorations(c,art,level,cam,behind=false){
     if(item.x+w<cam.x||item.x-w>cam.x+W)continue;
     c.save();if(behind)c.globalAlpha=.42;
     if(GROUND_PROPS.has(item.kind))drawGroundedSprite(c,art,item.kind,level,cam,item.x,item.y,w,h);
-    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,item.y-h-cam.y+(item.kind==='buoy'?h*.14:0),w,h);
+    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,item.y-h-cam.y+(item.kind==='buoy'?h*.4:0),w,h);
     c.restore();
   }
 }
@@ -165,12 +165,7 @@ export function render(c,state,level){
     c.save();c.beginPath();for(const [left,right] of level.waters)c.rect(left-cam.x,sy,right-left,Math.max(0,bed-sy));c.clip();
     drawAmbientBubbles(c,art,state.ambientBubbles,cam,time);c.restore();
   }
-  // The seabed is the bottom of the scene: fill beneath its transparent edge.
-  if(bed+40<H){c.fillStyle='#777267';c.fillRect(0,bed+40,W,H-(bed+40));}
-  // Extend the seabed texture downwards when a fixed camera exposes more ground.
-  for(let y=bed+18;level.id==='tutorial-1'&&y<H;y+=46)
-    for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240)
-      drawSprite(c,art,'seabed',x-cam.x,y,252,74);
+  // Camera limits keep the seabed lower edge at the viewport bottom.
   for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){
     drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
     const index=((x/480)%3+3)%3,id=['kelp','kelp-02','kelp-03'][index],sprite=art.sprites.get(id)||art.sprites.get('kelp');

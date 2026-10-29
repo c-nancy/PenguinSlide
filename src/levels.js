@@ -18,7 +18,7 @@ export const TUTORIAL=chapter(0,'启程练习','coast',[
 ],[[1500,2400]],[],3100,{
   entry:'出发之前，先沿着岸边走一走。',mid:'从这里入海，再回到那边的岸上。',
   exit:'脚下的冰和眼前的水，都熟悉了一点。',transition:'前面的路，从海湾开始。'
-},{id:'tutorial-1',tutorial:true,depthCharge:false,bottom:550,cameraY:-57,
+},{id:'tutorial-1',tutorial:true,depthCharge:false,bottom:550,cameraY:-128,
   keyHints:[{key:'right',x:350,y:210,untilX:620},{key:'up',x:2250,y:320,fromX:2180,when:'water'},
     {id:'shore-forward',key:'right',anchor:'player',dx:90,dy:-60,fromX:2180,untilX:2470,when:'air',onlyWhenVisible:true}],
   rocks:[],goal:{x:3130,y:350,kind:'shore'},decorations:[]});
