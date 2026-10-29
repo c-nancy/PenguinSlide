@@ -118,7 +118,8 @@ function moveOnIce(p,s,ix,dt) {
   const drive=ix*speed<0?CONFIG.groundBrakeThrust:CONFIG.groundThrust*driveGain;
   const force=ix*drive*t.x+CONFIG.gravity*t.y;
   speed=(speed+force*dt)/(1+(CONFIG.iceLinearDrag+CONFIG.iceQuadraticDrag*Math.abs(speed))*dt);
-  const friction=CONFIG.iceFriction*CONFIG.gravity*t.x*dt;
+  const grip=ix===0&&!isSliding(p)?CONFIG.standingFriction:CONFIG.iceFriction;
+  const friction=grip*CONFIG.gravity*t.x*dt;
   speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-friction);
   p.vx=speed*t.x;p.vy=speed*t.y;
 }
@@ -194,6 +195,12 @@ function stepCore(p,input,level,dt) {
   // Alpha edges and moving surfaces can leave a tiny initial overlap. Sweeping
   // from inside otherwise blocks both axes, including movement away from ice.
   const shapes=level.solids.filter(hasShape);
+  // Painted corner landings can sit just below the authored top. Resolve them
+  // onto that same top before support and movement use it.
+  if(p.grounded&&!p.wet){
+    const corner=shapes.find(s=>p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&p.y+CONFIG.halfHeight>=surfaceAt(s,p.x)&&p.y+CONFIG.halfHeight<=surfaceAt(s,p.x)+CONFIG.halfHeight);
+    if(corner)p.y=surfaceAt(corner,p.x)-CONFIG.halfHeight;
+  }
   const overlaps=(x,y)=>shapes.some(s=>shapeOverlap(s,{left:x-CONFIG.radius,right:x+CONFIG.radius,top:y-CONFIG.halfHeight,bottom:y+CONFIG.halfHeight}));
   const onTop=p.grounded&&shapes.some(s=>p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5);
   if(!onTop&&overlaps(p.x,p.y)){
@@ -238,7 +245,7 @@ function stepCore(p,input,level,dt) {
     if(hasShape(s)){
       if((wasGrounded&&support===s)||(p.vy<0&&p.y+CONFIG.halfHeight<=surfaceAt(s,p.x)+5))continue;
       const hit=shapeSweep(s,'x',oldX,p.x,p.y,CONFIG.radius,CONFIG.halfHeight);
-      if(hit){const right=p.x>oldX;impact(`solid:${index}:${right?'left':'right'}`,Math.abs(p.vx),right?-1:1,0);p.x=hit.position;p.vx=0;}
+      if(hit){const right=p.x>oldX;if(s.localShape&&p.wet)s.pushVX=Math.max(-45,Math.min(45,(s.pushVX||0)+p.vx*.12));impact(`solid:${index}:${right?'left':'right'}`,Math.abs(p.vx),right?-1:1,0);p.x=hit.position;p.vx=0;}
       continue;
     }
     const left=s.x1-CONFIG.radius,right=s.x2+CONFIG.radius;
@@ -267,8 +274,18 @@ function stepCore(p,input,level,dt) {
       const hit=shapeSweep(s,'y',oldY,p.y,p.x,CONFIG.radius,CONFIG.halfHeight);
       if(hit){
         const down=p.y>oldY;
+        if(!down&&wasWet){
+          const side=p.x<(s.x1+s.x2)/2?-1:1;
+          let slid=false;
+          for(let distance=1;distance<=8;distance++){
+            const x=p.x+side*distance,box={left:x-CONFIG.radius,right:x+CONFIG.radius,top:p.y-CONFIG.halfHeight,bottom:p.y+CONFIG.halfHeight};
+            if(x<CONFIG.radius||x>level.width-CONFIG.radius)break;
+            if(!level.solids.some(other=>hasShape(other)&&shapeOverlap(other,box))&&!shapeSweep(s,'y',oldY,p.y,x,CONFIG.radius,CONFIG.halfHeight)){p.x=x;slid=true;break;}
+          }
+          if(slid)continue;
+        }
         impact(`solid:${index}:${down?'top':'bottom'}`,Math.abs(p.vy),0,down?-1:1,down?{kind:'landing',angle:landingAngle(incoming.vx-(s.id===p.relativeIce?0:s.vx||0),incoming.vy)}:{});
-        p.y=hit.position;p.vy=0;p.grounded=down;
+        p.y=down&&hit.position+CONFIG.halfHeight<=top+CONFIG.halfHeight?top-CONFIG.halfHeight:hit.position;p.vy=0;p.grounded=down;
       }
     }else if(p.vy<0&&oldY-CONFIG.halfHeight>=s.bottom-2&&p.y-CONFIG.halfHeight<s.bottom){
       impact(`solid:${index}:bottom`,-p.vy,0,1);

@@ -1,3 +1,4 @@
+import {createSeals,updateSeals,sealEffects} from './seals.js';
 import {movingWorld} from './moving-ice.js';
 import {emitRing,updateRings} from './bubble-rings.js';
 import { LEVELS } from './levels.js';
@@ -35,7 +36,7 @@ function updateMusicButton(){
 $('music').onclick=()=>{music.toggle();updateMusicButton();};updateMusicButton();
 let progress=loadProgress(storage,LEVELS.length),chapter=progress.current,level=LEVELS[chapter];
 let p=createPlayer(level.start.x,level.start.y);
-const state={rings:[],p,cam:{x:p.x-410,y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(level),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
+const state={seals:createSeals(level),rings:[],p,cam:{x:p.x-410,y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(level),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const healingFeedback=createHealingFeedback(canvas,$('health-meter'),()=>reducedMotion.matches);
 const keys=new Set();
@@ -46,7 +47,7 @@ function persist(){saveProgress(storage,progress);}
 function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;music.setMode(mode);waterSound.setMode(mode);frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
 function focusGame(){canvas.focus({preventScroll:true});}
 function clearInput(){keys.clear();jumpQueued=false;accumulator=0;}
-function clearEffects(){state.rings=[];waterSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(level);state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
+function clearEffects(){state.seals=createSeals(level);state.rings=[];waterSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(level);state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
 function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=true;}
 function play(){
@@ -57,7 +58,7 @@ function play(){
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与四章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=`两段练习与五章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){
@@ -208,9 +209,19 @@ function update(dt){
   elapsed+=dt;effectTick++;
   const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space'))),jump:jumpQueued};jumpQueued=false;
   const healthBefore=p.health,previous={x:p.x,y:p.y};
+  if(state.seals.some(s=>s.mode==='bite')){
+    if(updateSeals(state.seals,p,movingWorld(p,level),dt))retry();
+    return;
+  }
+  if(state.seals.some(s=>s.mode==='charge')){
+    updateSeals(state.seals,p,movingWorld(p,level),dt);
+    return;
+  }
   step(p,input,level,dt);
-  updateRings(state.rings,movingWorld(p,level),dt);
-  updateAmbientBubbles(state.ambientBubbles,p,previous,state.time);
+  if(updateSeals(state.seals,p,movingWorld(p,level),dt)){resetPlayer(p,level);resetPose(p);clearEffects();state.cam.y=cameraY(level,p);return;}
+  sealEffects(state.seals,state.rings,state.ambientBubbles,state.time);
+  updateRings(state.rings,movingWorld(p,level),dt,state.ambientBubbles,state.time);
+  updateAmbientBubbles(state.ambientBubbles,p,previous,state.time,movingWorld(p,level));
   updateBirds(state.birds,p,dt);
   if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
   state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);

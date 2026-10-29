@@ -1,3 +1,4 @@
+import {drawSeals} from './seals.js';
 import {drawRings} from './bubble-rings.js';
 import {drawAmbientBubbles} from './ambient-bubbles.js';
 import {drawDizzyEffect} from './dizzy-effect.js';
@@ -166,6 +167,10 @@ export function render(c,state,level){
   }
   // The seabed is the bottom of the scene: fill beneath its transparent edge.
   if(bed+40<H){c.fillStyle='#777267';c.fillRect(0,bed+40,W,H-(bed+40));}
+  // Extend the seabed texture downwards when a fixed camera exposes more ground.
+  for(let y=bed+18;level.id==='tutorial-1'&&y<H;y+=46)
+    for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240)
+      drawSprite(c,art,'seabed',x-cam.x,y,252,74);
   for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){
     drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
     const index=((x/480)%3+3)%3,id=['kelp','kelp-02','kelp-03'][index],sprite=art.sprites.get(id)||art.sprites.get('kelp');
@@ -196,6 +201,7 @@ export function render(c,state,level){
     drawSprite(c,art,art.sprites.has('floe-original-pointed')?'floe-original-pointed':'ice-floe',W/2-158,438,310,145);
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
+  if(mode!=='menu')drawSeals(c,art,state.seals,cam,time);
   if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
   drawRings(c,art,state.rings,cam);

@@ -6,8 +6,8 @@ import {drawSprite} from './art.js';
 const sizes=[{name:'small',radius:10},{name:'medium',radius:16},{name:'large',radius:23}];
 function randomFor(seed){let n=seed>>>0;return ()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
 function hash(text){let n=2166136261;for(const c of text)n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
-function clearOfIce(level,x,y,r){
- const box={left:x-r-5,right:x+r+5,top:y-r-5,bottom:y+r+5};
+function clearOfIce(level,x,y,r,padding=5){
+ const box={left:x-r-padding,right:x+r+padding,top:y-r-padding,bottom:y+r+padding};
  return !(level.solids||[]).some(s=>{
   if(hasShape(s))return shapeOverlap(s,box);
   if(box.right<=s.x1||box.left>=s.x2||box.top>=s.bottom)return false;
@@ -22,7 +22,7 @@ export function createAmbientBubbles(level){
   for(let x=left+65;x<right-35;x+=220){
    for(let attempt=0;attempt<5;attempt++){
     const spec=sizes[Math.floor(rand()*sizes.length)],bx=Math.min(right-spec.radius-8,x+rand()*90),by=level.waterY+60+rand()*Math.max(1,waterHeight-120);
-    if(bx-spec.radius<left||by+spec.radius>level.bottom-12||!clearOfIce(level,bx,by,spec.radius))continue;
+    if(bx-spec.radius<left||by+spec.radius>level.bottom-16||!clearOfIce(level,bx,by,spec.radius,9))continue;
     result.push({x:bx,y:by,radius:spec.radius,size:spec.name,phase:'idle'});break;
    }
   }
@@ -32,18 +32,18 @@ export function createAmbientBubbles(level){
 export function bubblePosition(b,time){
  if(b.phase!=='idle')return {x:b.burstX??b.x,y:b.burstY??b.y};
  const phase=b.x*.031+b.y*.017;
- return {x:b.x+Math.sin(time*.65+phase)*3,y:b.y+Math.sin(time*.9+phase*1.7)*3};
+ return {x:b.x+Math.sin(time*.65+phase)*7,y:b.y+Math.sin(time*.9+phase*1.7)*7};
 }
 function segmentDistanceSquared(a,b,p){
  const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/den)):0;
  return (a.x+t*dx-p.x)**2+(a.y+t*dy-p.y)**2;
 }
-export function updateAmbientBubbles(bubbles,player,previous,time){
+export function updateAmbientBubbles(bubbles,player,previous,time,level=null){
  for(const bubble of bubbles){
   if(bubble.phase==='burst'){if(time-bubble.born>=.34)bubble.phase='gone';continue;}
-  if(bubble.phase!=='idle'||!player.wet)continue;
+  if(bubble.phase!=='idle')continue;
   const position=bubblePosition(bubble,time);
-  if(segmentDistanceSquared(previous,player,position)<=(bubble.radius+CONFIG.radius)**2){bubble.burstX=position.x;bubble.burstY=position.y;bubble.phase='burst';bubble.born=time;}
+  if((player.wet&&segmentDistanceSquared(previous,player,position)<=(bubble.radius+CONFIG.radius)**2)||(level&&!clearOfIce(level,position.x,position.y,bubble.radius,0))){bubble.burstX=position.x;bubble.burstY=position.y;bubble.phase='burst';bubble.born=time;}
  }
 }
 export function bubbleSprite(b,time){

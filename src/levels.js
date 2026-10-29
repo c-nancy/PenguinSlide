@@ -111,6 +111,9 @@ export const STORY_LEVELS=[
         {id:'final-second',x1:11100,x2:11480,y1:350,y2:350,bottom:580,kind:'floe',floeVariant:'floe-shallow',motion:'current',end:11460,trigger:10850}
       ]})
 ];
+const shuttle=(id,a,b,w,period)=>({id,x1:(a+b)/2,x2:(a+b)/2+w,y1:350,y2:350,bottom:490,kind:'floe',floeVariant:'floe-shallow',motion:'slow',amplitude:(b-a)/2,period,phase:-Math.PI/2});
+STORY_LEVELS[3].goal.kind='shore';
+STORY_LEVELS.push(chapter(5,'浮冰远行·2','bay',[block(-100,500,350),block(1500,2100,350,350,'checkpoint'),block(4200,4800,350,350,'checkpoint'),block(7100,7800,350,350,'finish')],[[500,1500],[2100,4200],[4800,7100]],[1750,4450],7550,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,movingIce:[shuttle('safe',520,1080,400,26),shuttle('pair-a',2120,2850,390,28),shuttle('pair-b',3260,3790,390,30),shuttle('triple-a',4820,5500,380,27),shuttle('triple-b',5900,6200,380,29),shuttle('triple-c',6600,6700,380,25)],seals:[{species:'fur',left:650,right:1350,x:1000,y:650,range:380},{species:'leopard',left:2200,right:4080,x:3300,y:650,range:850},{species:'fur',left:4900,right:5800,x:5400,y:650,range:450},{species:'leopard',left:5900,right:6980,x:6500,y:650,range:850}]}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -118,10 +121,11 @@ const birdPerches=[
   [[460,'petrel',25],[3110,'skua',29],[7050,'albatross',34]],
   [[380,'petrel',25],[7470,'skua',29],[9130,'albatross',34]],
   [[320,'petrel',25],[5750,'skua',29],[12700,'albatross',34]],
-  [[340,'petrel',25],[12700,'albatross',34]]
+  [[340,'petrel',25],[12700,'albatross',34]],
+  [[250,'petrel',25],[7400,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
-  level.birds=birdPerches[index].map(([x,species,height])=>{
+  level.birds=(birdPerches[index]||[]).map(([x,species,height])=>{
     const ground=level.solids.find(s=>x>=s.x1&&x<=s.x2);
     return {x,y:surfaceAt(ground,x),species,height};
   });

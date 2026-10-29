@@ -174,11 +174,15 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .health-fish-track{padding:3px 0}
 
 /* Compact paper acknowledgement modal. */
-.game-frame[data-mode=chapter-complete] .dialog{width:min(600px,94%);aspect-ratio:1657/949;max-height:96%;border:0;padding:48px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;background-size:100% 100%}
+.game-frame[data-mode=chapter-complete] .dialog,.game-frame[data-mode=finished] .dialog{width:min(600px,94%);aspect-ratio:1657/949;max-height:96%;border:0;padding:48px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;background-size:100% 100%}
 .game-frame[data-mode=chapter-complete] #dialog-kicker{display:block;font-size:12px;line-height:1.5;letter-spacing:1px}
 .game-frame[data-mode=chapter-complete] #resume{flex:none;margin:0}
 .game-frame[data-mode=chapter-complete] .dialog-actions{display:none}
+.game-frame[data-mode=finished] #dialog-kicker{display:block;font-size:12px;line-height:1.5;letter-spacing:1px}
+.game-frame[data-mode=finished] #resume{flex:none;margin:0}
+.game-frame[data-mode=finished] .dialog-actions{display:flex;justify-content:center;margin:0;flex-wrap:wrap}
 @media(max-width:550px){.game-frame[data-mode=chapter-complete] .dialog{padding:28px 24px;gap:14px}.game-frame[data-mode=chapter-complete] #dialog-kicker{font-size:11px}}
+@media(max-width:550px){.game-frame[data-mode=finished] .dialog{padding:24px;gap:12px}.game-frame[data-mode=finished] #dialog-kicker{font-size:11px}.game-frame[data-mode=finished] .dialog-actions{margin:0}}
 
 .credits{margin:16px auto 0;text-align:center;color:var(--graphite);font-size:12px}
 .credits-link{padding:6px 10px;border:0;background:transparent;color:inherit;opacity:.75;font:inherit;cursor:pointer}

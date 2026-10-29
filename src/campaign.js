@@ -28,6 +28,7 @@ export function loadProgress(storage,count=6){
         seenStory:old.seenStory.filter(id=>!id.startsWith('chapter-'))};
     }
     if(count>=5&&value?.version===4&&value.completed?.includes(3)&&value.unlocked===3)value={...value,unlocked:4};
+    if(count>=7&&value?.version===4&&value.completed?.includes(5)&&value.unlocked===5)value={...value,unlocked:6};
     if(count>=6&&value?.version===4&&value.completed?.includes(4)&&value.unlocked===4)value={...value,unlocked:5};
     return normalize(value,count);
   }catch{return initial();}
