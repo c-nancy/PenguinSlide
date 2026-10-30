@@ -6,9 +6,12 @@ export function createMusic(audio,storage){
   try{enabled=storage?.getItem(KEY)!=='false';}catch{/* Storage is optional. */}
   audio.src=MUSIC_URL;
   audio.loop=true;audio.preload='none';audio.volume=.3;audio.playbackRate=1;
+  const shouldPlay=()=>enabled&&unlocked&&['playing','transition'].includes(mode);
+  const enforcePause=()=>{if(!shouldPlay())audio.pause();};
+  audio.addEventListener?.('play',enforcePause);
   function sync(){
-    if(enabled&&unlocked&&['playing','transition'].includes(mode)){
-      if(audio.paused)try{Promise.resolve(audio.play()).catch(()=>{});}catch{/* Playback may need another gesture. */}
+    if(shouldPlay()){
+      if(audio.paused)try{Promise.resolve(audio.play()).then(enforcePause).catch(()=>{});}catch{/* Playback may need another gesture. */}
     }else audio.pause();
   }
   return {

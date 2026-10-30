@@ -25,19 +25,20 @@ export const TUTORIAL=chapter(0,'启程练习','coast',[
 
 export const SECOND_TUTORIAL=chapter(0,'在巢边歇一歇','bay',[
   block(-100,1200,300),block(1200,1500,300,380,'ramp'),
-  block(2000,2450,320,340,'floe',580),
-  block(2900,3300,340,390,'ramp'),block(4800,5700,260,320,'finish')
-],[[1500,2900],[3300,4800]],[900],5500,{
+  {...block(1850,2400,120,120,'tunnel',660),highSlab:true},block(2700,3100,395,380,'ramp'),
+  block(3600,4050,320,340,'floe',580),
+  block(4500,4900,340,390,'ramp'),block(6400,7300,260,320,'finish')
+],[[1500,2700],[3100,4500],[4900,6400]],[900],7100,{
   entry:'在巢边歇一歇，再往深一点的海里去。',mid:'有人留在岸边，也有人想去更远的地方。',
   exit:'原来，向下的路也能把你送得更高。',transition:'现在，沿着海湾出发。'
 },{id:'tutorial-2',tutorial:true,initialHealth:60,bottom:1040,checkpointActivationBefore:0,
   keyHints:[
-    {id:'ice-dive',key:'down',x:1810,y:430,fromX:1600,untilX:2000,maxY:620,when:'water',onlyWhenVisible:true},
-    {id:'ice-forward',key:'right',anchor:'player',dx:100,dy:0,fromX:1600,untilX:2540,minY:620,when:'water',onlyWhenVisible:true},
-    {id:'charge-dive',key:'down',anchor:'player',dx:80,dy:60,fromX:4650,untilX:4800,maxDepth:300,when:'water',onlyWhenVisible:true},
-    {id:'charge-ascent',key:'up',anchor:'player',dx:50,dy:-100,fromX:4650,minDepth:300,minY:510,when:'water',onlyWhenVisible:true},
-    {id:'charge-flight',key:'right',anchor:'player',dx:100,dy:-60,fromX:4650,untilX:5200,maxY:510,minCharge:.5,when:'rising',onlyWhenVisible:true}
-  ],goal:{x:5530,y:309,kind:'shore'},decorations:[]
+    {id:'ice-dive',key:'down',x:1700,y:430,fromX:1550,untilX:1850,maxY:700,when:'water',onlyWhenVisible:true},
+    {id:'ice-forward',key:'right',anchor:'player',dx:100,dy:0,fromX:1550,untilX:2500,minY:700,when:'water',onlyWhenVisible:true},
+    {id:'charge-dive',key:'down',anchor:'player',dx:80,dy:60,fromX:6250,untilX:6400,maxDepth:300,when:'water',onlyWhenVisible:true},
+    {id:'charge-ascent',key:'up',anchor:'player',dx:50,dy:-100,fromX:6250,minDepth:300,minY:510,when:'water',onlyWhenVisible:true},
+    {id:'charge-flight',key:'right',anchor:'player',dx:100,dy:-60,fromX:6250,untilX:6800,maxY:510,minCharge:.5,when:'rising',onlyWhenVisible:true}
+  ],goal:{x:7130,y:309,kind:'shore'},decorations:[]
 });
 
 export const STORY_LEVELS=[
@@ -113,7 +114,37 @@ export const STORY_LEVELS=[
 ];
 const shuttle=(id,a,b,w,period)=>({id,x1:(a+b)/2,x2:(a+b)/2+w,y1:350,y2:350,bottom:490,kind:'floe',floeVariant:'floe-shallow',motion:'slow',amplitude:(b-a)/2,period,phase:-Math.PI/2});
 STORY_LEVELS[3].goal.kind='shore';
-STORY_LEVELS.push(chapter(5,'浮冰远行·2','bay',[block(-100,500,350),block(1500,2100,350,350,'checkpoint'),block(4200,4800,350,350,'checkpoint'),block(7100,7800,350,350,'finish')],[[500,1500],[2100,4200],[4800,7100]],[1750,4450],7550,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,movingIce:[shuttle('safe',520,1080,400,26),shuttle('pair-a',2120,2850,390,28),shuttle('pair-b',3260,3790,390,30),shuttle('triple-a',4820,5500,380,27),shuttle('triple-b',5900,6200,380,29),shuttle('triple-c',6600,6700,380,25)],seals:[{species:'fur',left:650,right:1350,x:1000,y:650,range:380},{species:'leopard',left:2200,right:4080,x:3300,y:650,range:850},{species:'fur',left:4900,right:5800,x:5400,y:650,range:450},{species:'leopard',left:5900,right:6980,x:6500,y:650,range:850}]}));
+STORY_LEVELS.push(chapter(5,'漂移冰原·2','bay',[block(-100,500,350),block(1500,2100,350,350,'checkpoint'),block(4200,4800,350,350,'checkpoint'),block(7100,7800,350,350,'finish')],[[500,1500],[2100,4200],[4800,7100]],[1750,4450],7550,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,movingIce:[shuttle('safe',520,1080,400,26),shuttle('pair-a',2120,2850,390,28),shuttle('pair-b',3260,3790,390,30),shuttle('triple-a',4820,5500,380,27),shuttle('triple-b',5900,6200,380,29),shuttle('triple-c',6600,6700,380,25)],seals:[{species:'fur',left:650,right:1350,x:1000,y:650,range:380},{species:'leopard',left:2200,right:4080,x:3300,y:650,range:850},{species:'fur',left:4900,right:5800,x:5400,y:650,range:450},{species:'leopard',left:5900,right:6980,x:6500,y:650,range:850}]}));
+const thin=(id,x1,x2)=>({id,x1,x2,y1:350,y2:350,bottom:440,kind:'floe',floeVariant:'floe-shallow'});
+STORY_LEVELS[4].goal.kind='shore';
+STORY_LEVELS.push(chapter(6,'薄冰小径','bay',[block(-100,500,350),block(1400,2000,395,350,'ramp'),block(3400,4000,395,350,'checkpoint'),block(4500,4850,180,180,'tunnel',620),block(5200,5800,395,350,'checkpoint'),block(7500,8200,395,330,'finish')],[[500,1400],[2000,3400],[4000,5200],[5800,7500]],[3750,5550],7950,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:7980,y:350,kind:'lighthouse'},thinIce:[thin('first',520,920),...Array.from({length:5},(_,i)=>thin('run-'+i,2020+i*272,2292+i*272-(i===4?100:0))),thin('dive',4020,4500),...Array.from({length:6},(_,i)=>thin('choice-'+i,5820+i*277,6097+i*277-(i===5?102:0)))]}));
+STORY_LEVELS[5].goal.kind='shore';
+STORY_LEVELS.push(chapter(7,'薄冰小径·2','bay',[
+ block(-100,500,350),block(1400,2000,395,350,'checkpoint'),
+ block(2540,2810,350,350,'floe',490),block(3400,4000,395,350,'checkpoint'),
+ block(5200,5800,395,350,'shore'),
+ {...block(6651,6928,350,350,'floe',440),floeVariant:'floe-shallow'},
+ {...block(7482,7759,350,350,'floe',440),floeVariant:'floe-shallow'},
+ block(8331,9031,395,330,'finish')
+],[[500,1400],[2000,3400],[4000,5200],[5800,8331]],[1750,3750],8781,{entry:'',mid:'',exit:'',transition:''},
+ {bottom:1040,goal:{x:8811,y:350,kind:'lighthouse'},
+ thinIce:[thin('review',520,920),thin('fur-a',2020,2280),thin('fur-b',2280,2540),thin('fur-c',2810,3300),
+ ...Array.from({length:4},(_,i)=>thin('leopard-'+i,4020+i*272,4292+i*272-(i===3?8:0))),
+ ...Array.from({length:9},(_,i)=>thin('last-'+i,5820+i*277,6097+i*277-(i===8?102:0))).filter((_,i)=>i!==3&&i!==6)],
+ seals:[{species:'fur',left:2130,right:3240,x:2520,y:600,range:420},
+ {species:'leopard',left:4130,right:5060,x:4540,y:620,range:700},
+ {species:'fur',left:6000,right:7100,x:6550,y:600,range:420},
+ {species:'leopard',left:7200,right:8200,x:7700,y:620,range:700}]}));
+STORY_LEVELS[6].goal.kind='shore';
+const highIce=(id,x)=>({id,x1:x,x2:x+500,y1:260,y2:260,bottom:540,kind:'floe',floeVariant:'floe-original-flat',motion:'slow',amplitude:100,period:16});
+STORY_LEVELS.push(chapter(8,'高冰逐浪','bay',[
+ block(-100,600,330),block(600,800,330,395,'ramp'),
+ block(1850,2650,395,350,'ramp'),block(2650,3050,350,350,'checkpoint'),block(3050,3250,350,395,'ramp'),
+ block(3550,3750,180,180,'tunnel',600),
+ block(5200,5650,395,350,'ramp'),block(5650,6050,350,350,'checkpoint'),block(6050,6250,350,395,'ramp'),
+ block(8600,9250,395,330,'ramp'),block(9250,9800,330,330,'finish')
+],[[800,1850],[3250,5200],[6250,8600]],[2850,5850],9500,{entry:'',mid:'',exit:'',transition:''},
+ {bottom:1040,goal:{x:9530,y:330,kind:'lighthouse'},movingIce:[highIce('high-first',1150),highIce('high-window',4150),highIce('high-choice',6750)]}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -122,10 +153,13 @@ const birdPerches=[
   [[380,'petrel',25],[7470,'skua',29],[9130,'albatross',34]],
   [[320,'petrel',25],[5750,'skua',29],[12700,'albatross',34]],
   [[340,'petrel',25],[12700,'albatross',34]],
-  [[250,'petrel',25],[7400,'albatross',34]]
+  [[250,'petrel',25],[7400,'albatross',34]],
+  [[250,'petrel',25],[7900,'albatross',34]],
+  [[250,'petrel',25],[8731,'albatross',34]],
+  [[300,'petrel',25],[9500,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
-  level.birds=(birdPerches[index]||[]).map(([x,species,height])=>{
+  level.birds=(birdPerches[index]||[[250,'petrel',25],[7900,'albatross',34]]).map(([x,species,height])=>{
     const ground=level.solids.find(s=>x>=s.x1&&x<=s.x2);
     return {x,y:surfaceAt(ground,x),species,height};
   });
@@ -134,4 +168,4 @@ STORY_LEVELS.forEach((level,index)=>{
 // Fixed selection keeps visual silhouettes and alpha collision in agreement.
 const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
 let floeIndex=0;
-for(const level of LEVELS)for(const solid of level.solids)if(solid.kind==='floe')solid.floeVariant=floeVariants[floeIndex++%floeVariants.length];
+for(const level of LEVELS)for(const solid of level.solids)if(solid.kind==='floe'&&!solid.floeVariant)solid.floeVariant=floeVariants[floeIndex++%floeVariants.length];

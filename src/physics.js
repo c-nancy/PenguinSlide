@@ -1,3 +1,4 @@
+import {advanceThin,touchThin} from './thin-ice.js';
 import {movingWorld,riddenIce,advanceIce} from './moving-ice.js';
 import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
@@ -64,7 +65,7 @@ function supportFor(p,level) {
   // to walk or jump, and the painted slope blocks both movement axes.
   const atFoot=s=>Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5;
   return level.solids.find(s=>p.x>=s.x1&&p.x<=s.x2&&atFoot(s))||
-    level.solids.find(s=>hasShape(s)&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&atFoot(s));
+    level.solids.find(s=>(hasShape(s)||level.actors?.length)&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&atFoot(s));
 }
 function exposedSideTop(s,left,level){
   const x=left?s.x1:s.x2,y=left?s.y1:s.y2;
@@ -161,10 +162,22 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
   }
 }
 export function step(p,input,level,dt){
-  if(!level.movingIce?.length)return stepCore(p,input,level,dt);
+  if(!level.movingIce?.length&&!level.thinIce?.length)return stepCore(p,input,level,dt);
   if(p.finished||p.dead)return;
   const world=movingWorld(p,level),ride=riddenIce(p,world),oldVX=ride?.vx||0;
+  const previous={x:p.x,y:p.y};
+  advanceThin(world,p,dt);
   const hits=advanceIce(world,p,dt);
+  // A body wider than the closing seam should step across its lips, rather
+  // than fall a few pixels and then get carried through the receiving wall.
+  if(!p.wet&&p.vy>=0)for(const ice of world.actors){
+    for(const shore of level.solids){
+      const gap=shore.x1-ice.x2;
+      if(gap<0||gap>CONFIG.radius*2||p.x<ice.x2-CONFIG.radius||p.x>shore.x1+CONFIG.radius)continue;
+      const top=surfaceAt(shore,shore.x1),iceTop=surfaceAt(ice,ice.x2),feet=p.y+CONFIG.halfHeight;
+      if(Math.abs(top-iceTop)<=5&&feet>=top&&feet<=top+CONFIG.halfHeight){p.y=top-CONFIG.halfHeight;p.vy=0;p.grounded=true;}
+    }
+  }
   const jump=!!input.jump&&p.controlLock<=0&&p.hitStop<=0;
   if(ride){
     if(jump)p.vx+=ride.vx-oldVX;
@@ -172,6 +185,7 @@ export function step(p,input,level,dt){
   }
   p.relativeIce=ride&&!jump?ride.id:null;
   stepCore(p,input,world,dt);
+  touchThin(world,p,previous);
   p.relativeIce=null;
   if(ride&&!jump)p.vx+=ride.vx;
   const landed=riddenIce(p,world);
@@ -194,6 +208,20 @@ function stepCore(p,input,level,dt) {
   }
   // Alpha edges and moving surfaces can leave a tiny initial overlap. Sweeping
   // from inside otherwise blocks both axes, including movement away from ice.
+  const solidContains=(s,x,y)=>{
+    if(hasShape(s))return shapeOverlap(s,{left:x-CONFIG.radius,right:x+CONFIG.radius,top:y-CONFIG.halfHeight,bottom:y+CONFIG.halfHeight});
+    if(x+CONFIG.radius<=s.x1||x-CONFIG.radius>=s.x2||y-CONFIG.halfHeight>=s.bottom)return false;
+    return y+CONFIG.halfHeight>Math.min(surfaceAt(s,Math.max(s.x1,x-CONFIG.radius)),surfaceAt(s,Math.min(s.x2,x+CONFIG.radius)))+1e-5;
+  };
+  for(const s of level.solids){
+    if(hasShape(s)||p.x<=s.x1||p.x>=s.x2||p.y<=surfaceAt(s,p.x)+CONFIG.halfHeight||!solidContains(s,p.x,p.y))continue;
+    if(p.grounded&&p.x>=s.x1&&p.x<=s.x2&&Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5)continue;
+    const candidates=[{x:s.x1-CONFIG.radius,y:p.y},{x:s.x2+CONFIG.radius,y:p.y},
+      {x:p.x,y:Math.min(s.y1,s.y2)-CONFIG.halfHeight},{x:p.x,y:s.bottom+CONFIG.halfHeight}];
+    candidates.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
+    const free=candidates.find(q=>q.x>=CONFIG.radius&&q.x<=level.width-CONFIG.radius&&q.y<=level.bottom-CONFIG.halfHeight&&!level.solids.some(o=>solidContains(o,q.x,q.y)));
+    if(free){p.x=free.x;p.y=free.y;p.vx=0;p.vy=0;p.grounded=false;p.wet=waterColumn(p,level)&&p.y>=level.waterY;}
+  }
   const shapes=level.solids.filter(hasShape);
   // Painted corner landings can sit just below the authored top. Resolve them
   // onto that same top before support and movement use it.
@@ -301,6 +329,22 @@ function stepCore(p,input,level,dt) {
   collideRocks(p,level,{x:oldX,y:oldY});
   p.sliding=!p.wet&&isSliding(p);
   p.wet=p.y>level.waterY&&waterColumn(p,level);
+  if(p.wet){
+    const speed=Math.hypot(incoming.vx,incoming.vy);
+    if(speed>=8)p.swimSideRadius=Math.max(CONFIG.radius,34.5*Math.abs(incoming.vx)/speed+12*Math.abs(incoming.vy)/speed);
+    const radius=p.swimSideRadius||CONFIG.radius;
+    for(const [index,s] of level.solids.entries()){
+      if(p.y-CONFIG.halfHeight>=s.bottom||p.y+CONFIG.halfHeight<=Math.min(s.y1,s.y2)+5)continue;
+      const side=p.x<=s.x1?-1:p.x>=s.x2?1:0;if(!side)continue;
+      const before=p.x;
+      if(hasShape(s)){
+        const from=p.x+side*(radius+2),hit=shapeSweep(s,'x',from,p.x,p.y,radius,CONFIG.halfHeight);
+        if(hit)p.x=hit.position;
+      }else if(side<0&&p.x+radius>s.x1)p.x=s.x1-radius;
+      else if(side>0&&p.x-radius<s.x2)p.x=s.x2+radius;
+      if(Math.abs(p.x-before)>1e-5&&incoming.vx*side<0){impact(`solid:${index}:${side<0?'left':'right'}`,Math.abs(incoming.vx),side,0);p.vx=0;}
+    }
+  }else p.swimSideRadius=CONFIG.radius;
   if(p.wet&&!wasWet){p.maxDepth=0;p.energy=0;p.boosting=false;p.chargeFloor=0;p.rechargePending=false;p.surfaceJumped=false;p.event='splash';}
   if(p.wet)recordDepth(p,level);
   if(wasWet&&!p.wet){

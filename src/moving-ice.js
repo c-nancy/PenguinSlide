@@ -2,10 +2,11 @@ import {waterCurrentAt} from './currents.js';
 import {shapeSweep} from './shape-collision.js';
 import {surfaceAt} from './level.js';
 export function movingWorld(p,level){
- if(!level.movingIce?.length)return level;
+ if(!level.movingIce?.length&&!level.thinIce?.length)return level;
  if(p.iceWorld?.source===level)return p.iceWorld;
- const actors=level.movingIce.map(def=>({...def,vx:0,delta:0,clock:0,active:false,pushOffset:0,pushVX:0,localShape:{...def}}));
- p.iceWorld={...level,source:level,actors,solids:[...level.solids,...actors]};return p.iceWorld;
+ const actors=(level.movingIce||[]).map(def=>({...def,vx:0,delta:0,clock:0,active:false,pushOffset:0,pushVX:0,localShape:{...def}}));
+ const thinActors=(level.thinIce||[]).map(s=>({...s,thin:true,phase:'intact',age:0,restore:0}));
+ p.iceWorld={...level,source:level,actors,thinActors,solids:[...level.solids,...actors,...thinActors]};return p.iceWorld;
 }
 export function riddenIce(p,world){
  return p.grounded&&!p.wet?world.actors?.find(s=>p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-surfaceAt(s,p.x))<5):null;

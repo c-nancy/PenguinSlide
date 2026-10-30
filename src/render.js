@@ -1,3 +1,4 @@
+import {drawThin} from './thin-ice.js';
 import {drawSeals} from './seals.js';
 import {drawRings} from './bubble-rings.js';
 import {drawAmbientBubbles} from './ambient-bubbles.js';
@@ -25,6 +26,7 @@ export {resetPose} from './character-state.js';
 const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
 function terrain(c,art,s,cam,solids){
+  if(s.thin&&s.phase!=='intact')return;
   const t=surfaceTransform(s,cam),height=s.bottom-Math.min(s.y1,s.y2);
   if(s.kind==='floe'||s.kind==='tunnel'){
     // These sprites already contain their own irregular ice silhouette.
@@ -196,6 +198,7 @@ export function render(c,state,level){
     drawSprite(c,art,art.sprites.has('floe-original-pointed')?'floe-original-pointed':'ice-floe',W/2-158,438,310,145);
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
+  if(mode!=='menu')drawThin(c,art,level,cam);
   if(mode!=='menu')drawSeals(c,art,state.seals,cam,time);
   if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
