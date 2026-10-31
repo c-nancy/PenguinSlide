@@ -1,3 +1,4 @@
+import {releaseImageURL} from './release-images.js';
 import {THIN_URLS} from './thin-ice.js';
 import {SEAL_URLS} from './seals.js';
 import {RING_URLS} from './bubble-rings.js';
@@ -36,7 +37,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const files=[...items.sprites.map(item=>ITEMS+item.file),...floes.sprites.map(item=>FLOES+item.file),...stones.sprites.map(item=>STONES+item.file),...environment.backgrounds.map(item=>new URL(item.file,ENV).href),...environment.sprites.map(item=>new URL(item.file,ENV).href),...campaign.backgrounds.map(item=>CAMPAIGN+item.file),...campaign.sprites.map(item=>CAMPAIGN+item.file),...Object.values(character.animations).map(clip=>CHARACTER+clip.spritesheet)];
   files.push(...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
   const loadImage=createImageQueue(url=>new Promise((resolve,reject)=>{
-    const image=new Image();image.onload=()=>{images.set(url,image);resolve();};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=url;
+    const image=new Image();image.onload=()=>{images.set(url,image);resolve();};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
   }),3);
   const backgroundMap=new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]);
   const optional=[...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
