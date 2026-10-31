@@ -116,7 +116,8 @@ function moveOnIce(p,s,ix,dt) {
   if(ix===0&&Math.abs(speed)<CONFIG.standingSpeed&&Math.abs(downhillForce)<=CONFIG.standingFriction*normalForce){
     p.vx=0;p.vy=0;return;
   }
-  const drive=ix*speed<0?CONFIG.groundBrakeThrust:CONFIG.groundThrust*driveGain;
+  const baseDrive=ix*speed<0?CONFIG.groundBrakeThrust:CONFIG.groundThrust*driveGain;
+  const drive=isSliding(p)?baseDrive:Math.max(baseDrive,Math.abs(downhillForce)/Math.max(t.x,.01)+100);
   const force=ix*drive*t.x+CONFIG.gravity*t.y;
   speed=(speed+force*dt)/(1+(CONFIG.iceLinearDrag+CONFIG.iceQuadraticDrag*Math.abs(speed))*dt);
   const grip=ix===0&&!isSliding(p)?CONFIG.standingFriction:CONFIG.iceFriction;

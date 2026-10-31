@@ -7,6 +7,7 @@ export function checkpointFamilySprite(player,index){
 
 export function drawCheckpointFamily(c,art,level,cam,cp,index,player){
   // Larger emperor penguins stand beyond the nest and remain clear of the player.
+  const compact=cp.id==='chapter-3-flag-1';
   drawGroundedSprite(c,art,checkpointFamilySprite(player,index),level,cam,
-    cp.x+123,cp.y+22,132,88,.5,true);
+    cp.x+(compact?100:123),cp.y+22,compact?100:132,compact?67:88,.5,true);
 }
