@@ -20,6 +20,7 @@ import {createHealingFeedback} from './healing-feedback.js';
 import {createBirds,updateBirds} from './birds.js';
 import {createMusic} from './music.js';
 import {createWaterSound} from './water-sound.js';
+import {loadOnceAfterCover} from './menu-loading.js';
 
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d'),frameElement=document.querySelector('.game-frame');
@@ -108,10 +109,10 @@ function renderChapters(){
     button.append(number,title,status);button.onclick=()=>enterChapter(index);return button;
   }));
 }
-function openChapters(){if(!artReady||transitioning||state.mode==='chapters')return;chaptersReturn=state.mode==='playing'?'paused':state.mode;dialog('chapters');}
+function openChapters(){if(transitioning||state.mode==='chapters')return;chaptersReturn=state.mode==='playing'?'paused':state.mode;dialog('chapters');}
 function restore(kind){if(kind==='menu')menu();else if(kind==='playing')play();else dialog(kind);}
 async function enterChapter(index){
-  if(!artReady||transitioning||index>progress.unlocked||!LEVELS[index])return;
+  if(transitioning||index>progress.unlocked||!LEVELS[index])return;
   music.setMode('transition');music.unlock();
   waterSound.unlock();bubbleSound.unlock();
   transitioning=true;transitionInterrupted=false;setMode('transition');clearInput();hideNotice();
@@ -120,6 +121,7 @@ async function enterChapter(index){
   const curtain=$('chapter-transition');curtain.hidden=false;
   const loadingLabel=setTimeout(()=>{curtain.textContent='正在准备这一站的画稿…';},400);
   try{
+    if(!artReady)await prepareArt();
     await state.art.ensureLevel(LEVELS[index]);
     if(!reducedMotion.matches)await curtain.animate([{opacity:0},{opacity:1}],{duration:250,fill:'forwards',easing:'ease-out'}).finished;
     progress=selectChapter(progress,index,LEVELS.length);chapter=progress.current;level=LEVELS[chapter];persist();
@@ -202,15 +204,21 @@ function interrupt(){clearInput();if(transitioning)transitionInterrupted=true;el
 window.addEventListener('blur',interrupt);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)interrupt();});
 canvas.addEventListener('pointerdown',focusGame);
-$('start').disabled=true;$('start').textContent='正在铺开冰海画稿…';
-async function prepareArt(){
-try{state.art=await loadArt(level);
+const prepareArt=loadOnceAfterCover(async()=>{
+  const cover=$('menu-cover');
+  try{await cover.decode();}catch{/* The text and start action remain usable if the cover fails. */}
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+},async()=>{
+try{state.art=await loadArt(level,(done,total)=>{
+  $('loading-status').textContent=`正在准备旅程 · 素材 ${done} / ${total}`;
+  if(transitioning)$('chapter-transition').textContent=`正在准备旅程 · 素材 ${done} / ${total}`;
+});
   const retryCap=snowCapStrip(state.art,{x1:0,x2:180,y1:0,y2:0},[]);
   if(retryCap)$('retry').style.backgroundImage=`url("${retryCap.canvas.toDataURL()}")`;
-  artReady=true;$('start').disabled=false;$('start').onclick=()=>enterChapter(chapter);refreshMenu();}
-catch(error){$('start').disabled=false;$('start').textContent='加载失败，点击重试';$('start').onclick=()=>{ $('start').disabled=true;prepareArt();};console.error(error);}
-}
-prepareArt();
+  artReady=true;$('loading-status').textContent='旅程已准备好';refreshMenu();}
+catch(error){$('loading-status').textContent='旅程加载失败，点击 Start 重试';throw error;}
+});
+prepareArt().catch(()=>{});
 setMode('menu');
 function burst(kind,count=20){
   if(kind==='water')state.waterEffects=[...(state.waterEffects||[]).filter(effect=>state.time-effect.born<.6),{x:p.x,born:state.time,kind:p.event==='breach'?'splash-breach':'splash-entry'}];
@@ -298,7 +306,7 @@ function updateHUD(){
   $('pause').textContent=state.mode==='paused'?'▷':'Ⅱ';$('pause').setAttribute('aria-label',state.mode==='paused'?'继续游戏':'暂停游戏');
   $('pause').disabled=!['playing','paused'].includes(state.mode);
   $('retry').disabled=state.mode!=='playing';
-  $('chapters').disabled=!artReady||transitioning||state.mode==='chapters';
+  $('chapters').disabled=transitioning||state.mode==='chapters';
 }
 function resize(){healingFeedback.clear();const dpr=Math.min(window.devicePixelRatio||1,2);const r=canvas.getBoundingClientRect();canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);}
 new ResizeObserver(resize).observe(canvas);resize();

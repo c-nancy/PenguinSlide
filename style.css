@@ -22,6 +22,7 @@
 /* Journey cards share the drawing's paper, graphite and small amber landmarks. */
 :root{--paper:#f4efe5;--paper-raised:#faf6ee;--graphite:#41483e;--pencil:#757968;--pencil-rule:#77745c38;--lamp:#ab8148}
 .chapter-transition{position:absolute;inset:0;z-index:8;background:var(--paper);pointer-events:auto;display:grid;place-items:center}
+.menu-cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;display:none}.game-frame[data-mode=menu] .menu-cover{display:block}.intro p.loading-status{font-size:11px;line-height:1.5;margin:10px 0;color:var(--pencil)}
 .overlay.modal{background:#46453742}.dialog{background:var(--paper-raised);border-color:var(--pencil-rule);color:var(--graphite);max-height:94%;overflow:auto;overscroll-behavior:contain;width:min(530px,90%)}
 .dialog .eyebrow,.dialog p{color:var(--pencil)}.dialog h2{font-size:25px;letter-spacing:1px}
 .dialog-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;margin-top:18px}.dialog-actions .dialog-restart{margin:0;padding:7px 0;color:var(--pencil)}
@@ -112,7 +113,8 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .movement{padding:0;gap:0;background:transparent;border:0;border-radius:0;box-shadow:none;text-shadow:none}
 
 /* Temporary quiet start screen; keep the copy available for later revisions. */
-.intro > :not(#start){display:none}
+.intro > :not(#start):not(#loading-status){display:none}
+.intro #loading-status{display:block;position:absolute;left:10%;right:10%;bottom:7%;margin:0;text-align:center;font-size:clamp(10px,1vw,13px);color:var(--graphite);pointer-events:none}
 /* The scene's floating ice is the start control, aligned in canvas coordinates. */
 .intro{position:absolute;inset:0;margin:0;width:auto;text-align:center;pointer-events:none}
 .intro #start{position:absolute;left:37.65625%;top:60.833333%;width:24.21875%;height:20.138889%;min-width:0;margin:0;padding:1.1% 0 0;display:flex;align-items:flex-start;justify-content:center;border:0;border-radius:0;background:transparent;box-shadow:none;color:var(--graphite);font-family:Georgia,"Times New Roman",serif;font-size:clamp(13px,2.1vw,26px);font-weight:600;letter-spacing:2px;pointer-events:auto;clip-path:polygon(0 0,100% 0,100% 28%,87% 63%,72% 75%,53% 100%,32% 76%,13% 58%,0 28%);transition:color .15s}

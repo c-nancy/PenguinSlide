@@ -7,6 +7,7 @@
   <title>去远方 · To Distant Shores</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='13' y='5' width='38' height='54' rx='22' fill='%23183246'/%3E%3Cellipse cx='32' cy='38' rx='14' ry='18' fill='white'/%3E%3Cpath d='M26 23h12l-6 9z' fill='%23f8ba58'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
+  <link rel="preload" as="image" href="./assets/menu/cover.webp" fetchpriority="high">
 </head>
 <body>
   <main class="shell">
@@ -15,8 +16,9 @@
       <nav aria-label="游戏工具"><button id="chapters" class="text-button">章节</button><button id="music" class="icon-button" aria-label="关闭背景音乐" aria-pressed="true" title="关闭背景音乐">♫</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button></nav>
     </header>
 
-    <section class="game-frame" aria-label="企鹅横版闯关游戏">
+    <section class="game-frame" data-mode="menu" aria-label="企鹅横版闯关游戏">
       <canvas id="game" width="1280" height="720" tabindex="0" aria-label="企鹅游戏画面"></canvas>
+      <img id="menu-cover" class="menu-cover" src="./assets/menu/cover.webp" width="1280" height="720" fetchpriority="high" alt="企鹅站在冰块上，远处是冰海与雪山">
       <div class="vignette"></div>
       <div class="game-top" id="game-hud" hidden>
         <div class="chapter"><span class="eyebrow" id="chapter-number">1/5</span><strong id="stage">初见冰海</strong><div class="health-box" id="health-box"><span class="sr-only" id="health-value" aria-hidden="true">100 / 100</span><div class="health-fish-track" id="health-meter" role="progressbar" aria-label="生命值：每条小鱼代表20%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"></div></div></div>
@@ -34,6 +36,7 @@
           <h1>向深蓝潜去，<br>向天空<span>跃起。</span></h1>
           <p>它主动离开了企鹅群，开始独自旅行。<br>它想去看看，大海的另一边。</p>
           <button class="primary-button" id="start">Start</button>
+          <p id="loading-status" class="loading-status" role="status" aria-live="polite">正在准备旅程…</p>
           <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">两段练习与八章旅程 · 已走过 0 / 10 站</p>
         </div>
         <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden><span class="eyebrow" id="dialog-kicker">TAKE A BREATH</span><h2 id="dialog-title">歇一会儿</h2><p id="dialog-text">冰海会在这里等你。</p><blockquote id="chapter-story" class="chapter-story" hidden></blockquote><div id="chapter-list" class="chapter-list" aria-label="旅程章节" hidden></div><button class="primary-button" id="resume">继续冒险 <span>→</span></button><div class="dialog-actions"><button class="dialog-restart" id="restart">重新开始本关</button><button class="dialog-restart" id="dialog-chapters">选择章节</button><button class="dialog-restart" id="replay">重玩整段旅程</button></div></div>

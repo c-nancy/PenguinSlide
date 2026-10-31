@@ -29,7 +29,7 @@ export function animationFrame(clip,seconds){
   for(let i=0;i<clip.sequence.length;i++){if(tick<clip.durationsMs[i])return clip.sequence[i];tick-=clip.durationsMs[i];}
   return clip.sequence.at(-1);
 }
-export async function loadArt(initialLevel){
+export async function loadArt(initialLevel,onProgress=()=>{}){
   const json=async url=>{const response=await fetch(url);if(!response.ok)throw Error(`无法载入素材 ${url}`);return response.json();};
   const [environment,character,campaign,stones,floes,items,stoneAnimations,birds]=await Promise.all([json(ENV+'manifest.json'),json(CHARACTER+'manifest.json'),json(CAMPAIGN+'manifest.json'),json(STONES+'manifest.json'),json(FLOES+'manifest.json'),json(ITEMS+'manifest.json'),json(STONE_ANIMATIONS+'manifest.json'),json(BIRDS+'manifest.json')]);
   const images=new Map();
@@ -41,7 +41,7 @@ export async function loadArt(initialLevel){
   const backgroundMap=new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]);
   const optional=[...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
   const common=[...environment.sprites.map(s=>new URL(s.file,ENV).href),...floes.sprites.map(s=>FLOES+s.file),...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS];
-  const ensureLevel=async(level,background=false)=>{
+  const ensureLevel=async(level,background=false,report=()=>{})=>{
     if(!level){await Promise.all([...new Set(files)].map(url=>loadImage(url,background)));return;}
     const ids=chapterSpriteIds(level),themes=[level.theme||'coast','underwater'];
     if(level.openSeaFrom!==undefined)themes.push('home');
@@ -49,9 +49,10 @@ export async function loadArt(initialLevel){
     if(level.thinIce?.length||level.solids?.some(s=>s.thin))needed.push(...THIN_URLS);
     if(level.seals?.length)needed.push(...SEAL_URLS);
     if(level.tutorial)needed.push(TUTORIAL_KEYS_URL);
-    await Promise.all([...new Set(needed)].map(url=>loadImage(url,background)));
+    const urls=[...new Set(needed)];let completed=0;report(0,urls.length);
+    await Promise.all(urls.map(url=>loadImage(url,background).then(()=>report(++completed,urls.length))));
   };
-  await ensureLevel(initialLevel);
+  await ensureLevel(initialLevel,false,onProgress);
   const wall=environment.sprites.find(item=>item.id==='ice-wall-repeat');
   const wallTexture=wall?createIceWallTexture(images.get(new URL(wall.file,ENV).href)):null;
   const cap=environment.sprites.find(item=>item.id==='snow-cap-repeat');
