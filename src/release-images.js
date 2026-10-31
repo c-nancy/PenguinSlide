@@ -1,2 +1,3 @@
 export const releaseImageMap={};
-export function releaseImageURL(logical){const base=new URL("../",import.meta.url);const key=logical.startsWith(base.href)?logical.slice(base.href.length):null;return key&&releaseImageMap[key]?new URL(releaseImageMap[key].selected,base).href:logical;}
+export function resolveReleaseImage(logical,map,baseURL){const base=new URL(baseURL);const key=logical.startsWith(base.href)?logical.slice(base.href.length):null;const selected=key&&map[key];return selected?new URL(typeof selected==='string'?selected:selected.selected,base).href:logical;}
+export function releaseImageURL(logical){return resolveReleaseImage(logical,releaseImageMap,new URL('../',import.meta.url).href);}
