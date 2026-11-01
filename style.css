@@ -86,7 +86,7 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .route{padding:0;gap:12px;background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;height:42px}
 .route-nest{width:42px;height:22px;flex:none;background:url('./assets/optimized/eaca0d9f7d3573c5405a59637c6194f5dcad97ef5539b010a307a2878a3d4462.webp') center / contain no-repeat}
 .game-frame[data-chapter="tutorial-1"] .route-nest{display:none}
-.route-flag{width:27px;height:34px;flex:none;background:url('./assets/optimized/7f24115a61081c619df8416f296a8e35fdbbe0a18fc6a79c3e0c846246278d9a.webp') center / contain no-repeat}
+.route-flag{width:27px;height:34px;flex:none;transform:translateY(-6px);background:url('./assets/optimized/7f24115a61081c619df8416f296a8e35fdbbe0a18fc6a79c3e0c846246278d9a.webp') center / contain no-repeat}
 .route-track{width:180px;height:2px;background:#77796a55;border-radius:40%}
 .route-track>i{background:#777565;height:1px}
 .route-track #route-dot{top:auto;bottom:-1px;left:0;width:34px;height:19px;border:0;border-radius:0;background:url('./assets/optimized/e46056d04e00ac328cf1b5e38677dd05fa4139a597ddcddf941a5a089a2d3b24.webp') center bottom / contain no-repeat;transform:translateX(-50%)}

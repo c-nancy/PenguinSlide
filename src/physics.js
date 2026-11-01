@@ -1,4 +1,5 @@
 import {advanceThin,touchThin} from './thin-ice.js';
+import {advanceTide} from './tides.js';
 import {movingWorld,riddenIce,advanceIce} from './moving-ice.js';
 import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
@@ -42,13 +43,19 @@ function waterColumn(p,level) {
 function recordDepth(p,level) {
   if(level.depthCharge===false)return;
   const absoluteDepth=Math.max(0,p.y-level.waterY);
+  if(level.tide&&!level.tideDiving)return;
   if(p.rechargePending){
     // A new descent restores the reserve appropriate to the current depth.
     // Upward recoil alone cannot refill it, and old spent maxima are discarded.
     if(p.vy<=0)return;
     p.rechargePending=false;p.chargeFloor=0;
+    if(level.tide)p.tideDiveDepth=absoluteDepth;
   }
-  const depth=clamp(absoluteDepth-(p.chargeFloor||0),0,CONFIG.maxDepth);
+  if(level.tide){
+    if(p.rechargePending===false&&p.tideDiveDepth===undefined)p.tideDiveDepth=p.maxDepth;
+    p.tideDiveDepth=clamp((p.tideDiveDepth||0)+Math.max(0,p.y-level.tidePreviousY),0,CONFIG.maxDepth);
+  }
+  const depth=clamp(level.tide?p.tideDiveDepth:absoluteDepth-(p.chargeFloor||0),0,CONFIG.maxDepth);
   if(depth>p.maxDepth){p.energy+=storedWork(depth)-storedWork(p.maxDepth);p.maxDepth=depth;}
 }
 function restartCharge(p,level){
@@ -163,9 +170,10 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
   }
 }
 export function step(p,input,level,dt){
-  if(!level.movingIce?.length&&!level.thinIce?.length)return stepCore(p,input,level,dt);
+  if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide)return stepCore(p,input,level,dt);
   if(p.finished||p.dead)return;
   const world=movingWorld(p,level),ride=riddenIce(p,world),oldVX=ride?.vx||0;
+  if(level.tide)advanceTide(world,p,input,dt);
   const previous={x:p.x,y:p.y};
   advanceThin(world,p,dt);
   const hits=advanceIce(world,p,dt);
@@ -337,6 +345,7 @@ function stepCore(p,input,level,dt) {
     for(const [index,s] of level.solids.entries()){
       if(p.y-CONFIG.halfHeight>=s.bottom||p.y+CONFIG.halfHeight<=Math.min(s.y1,s.y2)+5)continue;
       const side=p.x<=s.x1?-1:p.x>=s.x2?1:0;if(!side)continue;
+      if(!hasShape(s)&&p.y+CONFIG.halfHeight<=exposedSideTop(s,side<0,level)+5)continue;
       const before=p.x;
       if(hasShape(s)){
         const from=p.x+side*(radius+2),hit=shapeSweep(s,'x',from,p.x,p.y,radius,CONFIG.halfHeight);
@@ -346,7 +355,7 @@ function stepCore(p,input,level,dt) {
       if(Math.abs(p.x-before)>1e-5&&incoming.vx*side<0){impact(`solid:${index}:${side<0?'left':'right'}`,Math.abs(incoming.vx),side,0);p.vx=0;}
     }
   }else p.swimSideRadius=CONFIG.radius;
-  if(p.wet&&!wasWet){p.maxDepth=0;p.energy=0;p.boosting=false;p.chargeFloor=0;p.rechargePending=false;p.surfaceJumped=false;p.event='splash';}
+  if(p.wet&&!wasWet){p.maxDepth=0;p.tideDiveDepth=0;p.energy=0;p.boosting=false;p.chargeFloor=0;p.rechargePending=false;p.surfaceJumped=false;p.event='splash';}
   if(p.wet)recordDepth(p,level);
   if(wasWet&&!p.wet){
     if(oldY>level.waterY&&p.y<=level.waterY&&p.vy<0){p.lastCharge=chargeForDepth(p.maxDepth);p.event='breach';}

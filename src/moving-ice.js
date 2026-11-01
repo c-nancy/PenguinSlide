@@ -2,7 +2,7 @@ import {waterCurrentAt} from './currents.js';
 import {shapeSweep} from './shape-collision.js';
 import {surfaceAt} from './level.js';
 export function movingWorld(p,level){
- if(!level.movingIce?.length&&!level.thinIce?.length)return level;
+ if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide)return level;
  if(p.iceWorld?.source===level)return p.iceWorld;
  const actors=(level.movingIce||[]).map(def=>({...def,vx:0,delta:0,clock:0,active:false,pushOffset:0,pushVX:0,localShape:{...def}}));
  const thinActors=(level.thinIce||[]).map(s=>({...s,thin:true,phase:'intact',age:0,restore:0}));

@@ -116,8 +116,17 @@ const shuttle=(id,a,b,w,period)=>({id,x1:(a+b)/2,x2:(a+b)/2+w,y1:350,y2:350,bott
 STORY_LEVELS[3].goal.kind='shore';
 STORY_LEVELS.push(chapter(5,'漂移冰原·2','bay',[block(-100,500,350),block(1500,2100,350,350,'checkpoint'),block(4200,4800,350,350,'checkpoint'),block(7100,7800,350,350,'finish')],[[500,1500],[2100,4200],[4800,7100]],[1750,4450],7550,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,movingIce:[shuttle('safe',520,1080,400,26),shuttle('pair-a',2120,2850,390,28),shuttle('pair-b',3260,3790,390,30),shuttle('triple-a',4820,5500,380,27),shuttle('triple-b',5900,6200,380,29),shuttle('triple-c',6600,6700,380,25)],seals:[{species:'fur',left:650,right:1350,x:1000,y:650,range:380},{species:'leopard',left:2200,right:4080,x:3300,y:650,range:850},{species:'fur',left:4900,right:5800,x:5400,y:650,range:450},{species:'leopard',left:5900,right:6980,x:6500,y:650,range:850}]}));
 const thin=(id,x1,x2)=>({id,x1,x2,y1:350,y2:350,bottom:440,kind:'floe',floeVariant:'floe-shallow'});
+const restIce=(x1,x2,y)=>({...block(x1,x2,y,y,'floe',480),floeVariant:'floe-shallow'});
 STORY_LEVELS[4].goal.kind='shore';
-STORY_LEVELS.push(chapter(6,'薄冰小径','bay',[block(-100,500,350),block(1400,2000,395,350,'ramp'),block(3400,4000,395,350,'checkpoint'),block(4500,4850,180,180,'tunnel',620),block(5200,5800,395,350,'checkpoint'),block(7500,8200,395,330,'finish')],[[500,1400],[2000,3400],[4000,5200],[5800,7500]],[3750,5550],7950,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:7980,y:350,kind:'lighthouse'},thinIce:[thin('first',520,920),...Array.from({length:5},(_,i)=>thin('run-'+i,2020+i*272,2292+i*272-(i===4?100:0))),thin('dive',4020,4500),...Array.from({length:6},(_,i)=>thin('choice-'+i,5820+i*277,6097+i*277-(i===5?102:0)))]}));
+STORY_LEVELS.push(chapter(6,'薄冰小径','bay',[block(-100,500,350),block(1400,2000,395,350,'ramp'),block(3400,4000,395,350,'checkpoint'),block(4500,4850,180,180,'tunnel',620),block(5200,5800,395,350,'checkpoint'),block(7500,8200,395,330,'finish')],[[500,1400],[2000,3400],[4000,5200],[5800,7500]],[3750,5550],7950,{entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:7980,y:350,kind:'lighthouse'},thinIce:[thin('first',520,920),...Array.from({length:5},(_,i)=>thin('run-'+i,2020+i*272,2292+i*272-(i===4?100:0))),thin('dive-a',4020,4220),thin('dive-b',4360,4500),...Array.from({length:6},(_,i)=>thin('choice-'+i,5820+i*277,6097+i*277-(i===5?102:0)))]}));
+// Replace uniform runs with readable water gaps and a raised landing.
+STORY_LEVELS[5].solids.splice(2,0,restIce(2790,3060,330));
+STORY_LEVELS[5].thinIce=STORY_LEVELS[5].thinIce.filter(s=>!s.id.startsWith('run-'));
+STORY_LEVELS[5].thinIce.push(thin('run-a',2020,2350),thin('run-b',2400,2740),thin('run-c',3110,3300));
+STORY_LEVELS[5].thinIce.filter(s=>s.id.startsWith('choice-')).forEach((s,i)=>{if(i<5)s.x2-=80;});
+STORY_LEVELS[5].thinIce.filter(s=>s.id.startsWith('choice-')).forEach((s,i)=>{
+ const top=[350,330,350,320,340,350][i];s.y1=s.y2=top;s.bottom=top+90;
+});
 STORY_LEVELS[5].goal.kind='shore';
 STORY_LEVELS.push(chapter(7,'薄冰小径·2','bay',[
  block(-100,500,350),block(1400,2000,395,350,'checkpoint'),
@@ -135,6 +144,18 @@ STORY_LEVELS.push(chapter(7,'薄冰小径·2','bay',[
  {species:'leopard',left:4130,right:5060,x:4540,y:620,range:700},
  {species:'fur',left:6000,right:7100,x:6550,y:600,range:420},
  {species:'leopard',left:7200,right:8200,x:7700,y:620,range:700}]}));
+STORY_LEVELS[6].thinIce.filter(s=>s.id.startsWith('last-')).forEach((s,i)=>{
+ if(i<6)s.x2-=80;
+ s.y1=s.y2=[350,330,350,340,350,340,350][i];s.bottom=s.y1+90;
+});
+STORY_LEVELS[6].thinIce.filter(s=>s.id.startsWith('leopard-')).forEach((s,i)=>{
+ if(i<3)s.x2-=80;s.y1=s.y2=i%2?330:350;s.bottom=s.y1+90;
+});
+for(const s of STORY_LEVELS[6].solids)if(s.x1===6651||s.x1===7482)s.y1=s.y2=330;
+STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-a').x2-=60;
+STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-b').x1+=20;
+const furStep=STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-b');furStep.y1=furStep.y2=330;furStep.bottom=420;
+STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-c').x1+=80;
 STORY_LEVELS[6].goal.kind='shore';
 const highIce=(id,x)=>({id,x1:x,x2:x+500,y1:260,y2:260,bottom:540,kind:'floe',floeVariant:'floe-original-flat',motion:'slow',amplitude:100,period:16});
 STORY_LEVELS.push(chapter(8,'高冰逐浪','bay',[
@@ -145,6 +166,16 @@ STORY_LEVELS.push(chapter(8,'高冰逐浪','bay',[
  block(8600,9250,395,330,'ramp'),block(9250,9800,330,330,'finish')
 ],[[800,1850],[3250,5200],[6250,8600]],[2850,5850],9500,{entry:'',mid:'',exit:'',transition:''},
  {bottom:1040,goal:{x:9530,y:330,kind:'lighthouse'},movingIce:[highIce('high-first',1150),highIce('high-window',4150),highIce('high-choice',6750)]}));
+STORY_LEVELS[7].goal.kind='shore';
+STORY_LEVELS.push(chapter(9,'潮汐海湾','bay',[
+ block(-100,500,280),block(500,800,280,420,'ramp'),
+ block(1600,1900,435),block(1900,2400,435,280,'ramp'),block(2400,2800,280,280,'checkpoint'),block(2800,3100,280,420,'ramp'),
+ block(3650,4000,390,390,'floe',570),
+ block(4300,4600,435),block(4600,5100,435,280,'ramp'),block(5100,5500,280,280,'checkpoint'),block(5500,5800,280,420,'ramp'),
+ block(6400,6800,400,400,'floe',570),block(7100,7450,295,295,'floe',540),
+ block(7700,8000,435),block(8000,8600,435,280,'ramp'),block(8600,9300,280,280,'finish')
+],[[800,1600],[3100,4300],[5800,7700]],[2600,5300],9050,{entry:'',mid:'',exit:'',transition:''},
+ {bottom:1040,tide:{amplitude:55,period:24},goal:{x:9080,y:280,kind:'lighthouse'},decorations:[{kind:'buoy',x:1100,y:380,w:55,h:74},{kind:'buoy',x:6000,y:380,w:55,h:74}]}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -156,7 +187,8 @@ const birdPerches=[
   [[250,'petrel',25],[7400,'albatross',34]],
   [[250,'petrel',25],[7900,'albatross',34]],
   [[250,'petrel',25],[8731,'albatross',34]],
-  [[300,'petrel',25],[9500,'albatross',34]]
+  [[300,'petrel',25],[9500,'albatross',34]],
+  [[300,'petrel',25],[8900,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
   level.birds=(birdPerches[index]||[[250,'petrel',25],[7900,'albatross',34]]).map(([x,species,height])=>{

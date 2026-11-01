@@ -148,6 +148,13 @@ export function render(c,state,level){
   c.clearRect(0,0,W,H);c.fillStyle='#f2ecdf';c.fillRect(0,0,W,H);if(!art)return;
   const sy=level.waterY-cam.y,bed=level.bottom-cam.y;
   scenery(c,art,level,cam,sy);
+  if(level.tide){
+    c.save();c.strokeStyle='#69685c';c.globalAlpha=.45;c.lineWidth=1;
+    for(const [left,right] of level.waters)for(const x of [left+12,right-32])for(const y of [level.source.waterY-level.tide.amplitude,level.source.waterY+level.tide.amplitude]){
+      c.beginPath();c.moveTo(x-cam.x,y-cam.y);c.lineTo(x+20-cam.x,y-cam.y);c.stroke();
+    }
+    c.restore();
+  }
   if(sy<H){
     c.save();c.beginPath();c.rect(0,Math.max(0,sy),W,H);c.clip();
     // The parallax image must still cover the screen at the far end of long levels.
