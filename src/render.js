@@ -1,3 +1,4 @@
+import {drawBreakableWalls} from './ice-gates.js';
 import {drawThin} from './thin-ice.js';
 import {drawSeals} from './seals.js';
 import {drawRings} from './bubble-rings.js';
@@ -7,6 +8,7 @@ import {drawImpactEffects} from './impact-effects.js';
 import {CONFIG,remainingCharge} from './physics.js';
 import {surfaceAt} from './level.js';
 import {buoySurfaceY} from './tides.js';
+import {waterBackgroundFrame} from './water-background.js';
 import {drawSprite,animationFrame,surfaceTransform} from './art.js';
 import {characterMotion} from './character-state.js';
 import {drawEnergyBubbles} from './energy-bubbles.js';
@@ -27,6 +29,11 @@ export {resetPose} from './character-state.js';
 const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
 function terrain(c,art,s,cam,solids){
+  if(s.kind==='weak-wall')return;
+  if(s.wallSection){
+    if(art.wallTexture)c.drawImage(art.wallTexture,s.x1-cam.x,s.y1-cam.y,s.x2-s.x1,s.bottom-s.y1);
+    drawWallPencilEdges(c,art,{...s,y1:s.y1-SNOW_CAP.wallStart,y2:s.y2-SNOW_CAP.wallStart},solids,cam);return;
+  }
   if(s.thin&&s.phase!=='intact')return;
   const t=surfaceTransform(s,cam),height=s.bottom-Math.min(s.y1,s.y2);
   if(s.kind==='floe'||s.kind==='tunnel'){
@@ -148,7 +155,8 @@ export function render(c,state,level){
   const {p,cam,time,particles,mode,art}=state;
   c.clearRect(0,0,W,H);c.fillStyle='#f2ecdf';c.fillRect(0,0,W,H);if(!art)return;
   const sy=level.waterY-cam.y,bed=level.bottom-cam.y;
-  scenery(c,art,level,cam,sy);
+  const waterBackground=waterBackgroundFrame(level,cam);
+  scenery(c,art,level,cam,waterBackground.horizonY);
   if(level.tide){
     c.save();c.strokeStyle='#69685c';c.globalAlpha=.45;c.lineWidth=1;
     for(const [left,right] of level.waters)for(const x of [left+12,right-32])for(const y of [level.source.waterY-level.tide.amplitude,level.source.waterY+level.tide.amplitude]){
@@ -156,14 +164,15 @@ export function render(c,state,level){
     }
     c.restore();
   }
-  if(sy<H){
-    c.save();c.beginPath();c.rect(0,Math.max(0,sy),W,H);c.clip();
+  const regions=level.basinSurfaces||[{left:cam.x,right:cam.x+W,waterY:level.waterY}];
+  if(regions.some(r=>r.waterY-cam.y<H)){
+    c.save();c.beginPath();for(const r of regions)c.rect(r.left-cam.x,Math.max(0,r.waterY-cam.y),r.right-r.left,H);c.clip();
     // The parallax image must still cover the screen at the far end of long levels.
     const underwaterX=Math.min(0,-cam.x*.045);
     const underwaterWidth=Math.max(1580,W+Math.max(0,level.width-1160)*.045+16);
-    c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),underwaterX,sy,underwaterWidth,level.bottom-level.waterY+160);
+    c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),underwaterX,waterBackground.underwaterY,underwaterWidth,waterBackground.underwaterHeight);
     c.globalAlpha=.45;
-    for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=level.waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100){
+    for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=(level.source||level).waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100){
       const id=['fish','fish-school-02','fish-school-03'][i%3],sprite=art.sprites.get(id)||art.sprites.get('fish');
       const height=sprite?.rect?76*sprite.rect.h/sprite.rect.w:42;
       drawSprite(c,art,sprite?.id||'fish',x,y,76,height);
@@ -172,7 +181,7 @@ export function render(c,state,level){
   }
   if(mode!=='menu'){
     drawCurrents(c,art,level,cam,time);
-    c.save();c.beginPath();for(const [left,right] of level.waters)c.rect(left-cam.x,sy,right-left,Math.max(0,bed-sy));c.clip();
+    c.save();c.beginPath();for(const r of regions)c.rect(r.left-cam.x,r.waterY-cam.y,r.right-r.left,Math.max(0,level.bottom-r.waterY));c.clip();
     drawAmbientBubbles(c,art,state.ambientBubbles,cam,time);c.restore();
   }
   // Camera limits keep the seabed lower edge at the viewport bottom.
@@ -184,15 +193,23 @@ export function render(c,state,level){
   }}
   // Draw a continuous surface behind the terrain. Low receiving ramps start
   // underwater, so cutting the waves at the ramp's x1 leaves a visible seam.
-  if(sy>-25&&sy<H){
-    c.save();c.beginPath();c.rect(0,sy-7,W,28);c.clip();
-    for(let x=Math.floor(cam.x/180)*180;x<cam.x+W;x+=180)
-      drawSprite(c,art,'waterline',x-cam.x,sy-6+Math.sin(time*2)*1.2,184,23);
+  for(const region of regions){const surfaceY=region.waterY-cam.y;
+    if(surfaceY<=-25||surfaceY>=H)continue;
+    c.save();c.beginPath();c.rect(region.left-cam.x,surfaceY-7,region.right-region.left,28);c.clip();
+    for(let x=Math.floor(cam.x/180)*180;x<cam.x+W;x+=180)drawSprite(c,art,'waterline',x-cam.x,surfaceY-6+Math.sin(time*2)*1.2,184,23);
     c.restore();
   }
   if(mode!=='menu'){
+    for(const gate of level.gateActors||[])if(gate.open&&gate.fill<1){
+      c.save();c.strokeStyle='#708a87';c.globalAlpha=.6;
+      for(let i=0;i<5;i++){
+        const x=gate.x1+40+(time*90+i*42)%360-cam.x,y=gate.y1+50+i*30-cam.y;
+        c.beginPath();c.moveTo(x-15,y);c.lineTo(x,y);c.lineTo(x-5,y-4);c.stroke();
+      }c.restore();
+    }
     decorations(c,art,level,cam,true);
     for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids);
+    drawBreakableWalls(c,art,level,cam);
     decorations(c,art,level,cam);
     for(const original of level.rocks||[]){
       const rock=rockAppearance(original,p);

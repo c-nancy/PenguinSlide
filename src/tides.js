@@ -3,7 +3,7 @@ export function tideSurface(level,time){
  return tide?level.waterY-tide.amplitude*Math.max(-1,Math.min(1,Math.sin(time*2*Math.PI/tide.period+(tide.phase||0))*(tide.hold||1))):level.waterY;
 }
 export function buoySurfaceY(item,level){
- return item.y+(level.tide?level.waterY-(level.source||level).waterY:0);
+ return item.y+(level.tide||level.gates?level.waterY-(level.source||level).waterY:0);
 }
 export function advanceTide(world,p,input,dt){
  world.tideTime=(world.tideTime||0)+dt;

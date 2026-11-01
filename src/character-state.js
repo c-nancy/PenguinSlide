@@ -24,7 +24,8 @@ export function characterMotion(p,time,menu=false){
   let facing=p.facing===-1?-1:1,swimTilt=0;
   if(pose==='swim'){
     const vy=p.vy||0;
-    if(Math.hypot(p.vx,vy)>=swimDirectionSpeed){
+    if(p.pushingIce){state.swimFacing=1;state.swimTilt=0;}
+    else if(Math.hypot(p.vx,vy)>=swimDirectionSpeed){
       // Near vertical, keep the same mirrored side through tiny horizontal drift.
       if(p.vx>swimTurnSpeed)state.swimFacing=1;
       else if(p.vx<-swimTurnSpeed)state.swimFacing=-1;

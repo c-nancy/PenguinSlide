@@ -1,5 +1,6 @@
 import {advanceThin,touchThin} from './thin-ice.js';
 import {advanceTide} from './tides.js';
+import {advanceGates} from './ice-gates.js';
 import {movingWorld,riddenIce,advanceIce} from './moving-ice.js';
 import { surfaceAt } from './level.js';
 import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
@@ -43,19 +44,19 @@ function waterColumn(p,level) {
 function recordDepth(p,level) {
   if(level.depthCharge===false)return;
   const absoluteDepth=Math.max(0,p.y-level.waterY);
-  if(level.tide&&!level.tideDiving)return;
+  if((level.tide||level.gates)&&!level.tideDiving)return;
   if(p.rechargePending){
     // A new descent restores the reserve appropriate to the current depth.
     // Upward recoil alone cannot refill it, and old spent maxima are discarded.
     if(p.vy<=0)return;
     p.rechargePending=false;p.chargeFloor=0;
-    if(level.tide)p.tideDiveDepth=absoluteDepth;
+    if((level.tide||level.gates))p.tideDiveDepth=absoluteDepth;
   }
-  if(level.tide){
+  if((level.tide||level.gates)){
     if(p.rechargePending===false&&p.tideDiveDepth===undefined)p.tideDiveDepth=p.maxDepth;
     p.tideDiveDepth=clamp((p.tideDiveDepth||0)+Math.max(0,p.y-level.tidePreviousY),0,CONFIG.maxDepth);
   }
-  const depth=clamp(level.tide?p.tideDiveDepth:absoluteDepth-(p.chargeFloor||0),0,CONFIG.maxDepth);
+  const depth=clamp((level.tide||level.gates)?p.tideDiveDepth:absoluteDepth-(p.chargeFloor||0),0,CONFIG.maxDepth);
   if(depth>p.maxDepth){p.energy+=storedWork(depth)-storedWork(p.maxDepth);p.maxDepth=depth;}
 }
 function restartCharge(p,level){
@@ -170,10 +171,11 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
   }
 }
 export function step(p,input,level,dt){
-  if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide)return stepCore(p,input,level,dt);
+  if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide&&!level.gates)return stepCore(p,input,level,dt);
   if(p.finished||p.dead)return;
   const world=movingWorld(p,level),ride=riddenIce(p,world),oldVX=ride?.vx||0;
   if(level.tide)advanceTide(world,p,input,dt);
+  if(level.gates)advanceGates(world,p,input,dt);
   const previous={x:p.x,y:p.y};
   advanceThin(world,p,dt);
   const hits=advanceIce(world,p,dt);
@@ -189,7 +191,7 @@ export function step(p,input,level,dt){
   }
   const jump=!!input.jump&&p.controlLock<=0&&p.hitStop<=0;
   if(ride){
-    if(jump)p.vx+=ride.vx-oldVX;
+    if(jump){p.vx+=ride.vx-oldVX;p.vy+=ride.vy||0;}
     else {p.x+=ride.delta;p.vx-=oldVX;}
   }
   p.relativeIce=ride&&!jump?ride.id:null;
@@ -201,6 +203,7 @@ export function step(p,input,level,dt){
   p.platformVX=landed?.vx||0;
   if(landed&&landed!==ride&&Math.abs(p.vx-landed.vx)<180)p.vx=landed.vx;
   if(hits.length)resolveImpacts(p,hits,[...p.contacts,...hits.map(h=>h.key)]);
+  if(p.weakWallHit){p.hit=p.weakWallHit;p.weakWallHit=null;if(p.dead)p.event='death';}
 }
 function stepCore(p,input,level,dt) {
   p.event=null;p.waterSoundEvent=null;p.hit=null;p.reaction=null;p.impactEffect=null;

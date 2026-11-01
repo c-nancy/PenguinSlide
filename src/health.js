@@ -2,7 +2,7 @@ export const HEALTH=Object.freeze({max:100,safeSpeed:360,fullDamageSpeed:1400,mi
   hitStop:.08,recoilRecovery:.3,minRecoil:110,maxRecoil:145,recoilFactor:.15,safeLandingAngle:75});
 
 export function healthState(){
-  return {health:HEALTH.max,dead:false,invulnerable:0,contacts:[],hit:null,reaction:null,hitStop:0,controlLock:0,pendingKnockback:null};
+  return {health:HEALTH.max,dead:false,invulnerable:0,contacts:[],hit:null,weakWallHit:null,reaction:null,hitStop:0,controlLock:0,pendingKnockback:null};
 }
 export function impactDamage(speed){
   if(speed<=HEALTH.safeSpeed)return 0;

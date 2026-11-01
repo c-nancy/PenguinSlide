@@ -2,11 +2,16 @@ import {waterCurrentAt} from './currents.js';
 import {shapeSweep} from './shape-collision.js';
 import {surfaceAt} from './level.js';
 export function movingWorld(p,level){
- if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide)return level;
+ if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide&&!level.gates)return level;
  if(p.iceWorld?.source===level)return p.iceWorld;
  const actors=(level.movingIce||[]).map(def=>({...def,vx:0,delta:0,clock:0,active:false,pushOffset:0,pushVX:0,localShape:{...def}}));
  const thinActors=(level.thinIce||[]).map(s=>({...s,thin:true,phase:'intact',age:0,restore:0}));
- p.iceWorld={...level,source:level,actors,thinActors,solids:[...level.solids,...actors,...thinActors]};return p.iceWorld;
+ const gateActors=(level.gates||[]).map((g,i)=>{const cleared=p.checkpoint&&i<p.checkpointIndex;return {...g,shift:0,open:!!cleared,fill:cleared?1:0,hits:cleared?2:0};});
+ const basinSurfaces=level.basins?.map(b=>({...b,waterY:b.initial-(b.feed===undefined?0:(b.initial-b.target)*gateActors[b.feed].fill)}));
+ for(const s of actors)if(s.motion==='water'){
+  const dy=basinSurfaces[s.basin].waterY+s.freeboard-s.y1;s.y1+=dy;s.y2+=dy;s.bottom+=dy;
+ }
+ p.iceWorld={...level,source:level,actors,thinActors,gateActors,basinSurfaces,solids:[...level.solids,...actors,...thinActors,...gateActors]};return p.iceWorld;
 }
 export function riddenIce(p,world){
  return p.grounded&&!p.wet?world.actors?.find(s=>p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-surfaceAt(s,p.x))<5):null;
@@ -17,6 +22,13 @@ export function advanceIce(world,p,dt){
   const old={...s,localShape:s.localShape},start=s.x1,width=s.x2-s.x1;
   s.x1-=s.pushOffset;
   const riding=p.grounded&&!p.wet&&p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-surfaceAt(s,p.x))<5;
+  if(s.motion==='water'){
+   const water=world.basinSurfaces?.[s.basin]?.waterY??world.source.waterY;
+   const dy=water+s.freeboard-s.y1;
+   s.y1+=dy;s.y2+=dy;s.bottom+=dy;s.deltaY=dy;s.delta=0;s.vx=0;s.vy=dy/dt;
+   if(riding)p.y+=dy;
+   continue;
+  }
   if(s.motion==='slow'){
    s.clock+=dt;s.x1=s.localShape.x1+s.amplitude*Math.sin(s.clock*Math.PI*2/s.period+(s.phase||0));
   }else{

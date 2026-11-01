@@ -128,6 +128,7 @@ STORY_LEVELS[5].thinIce.filter(s=>s.id.startsWith('choice-')).forEach((s,i)=>{
  const top=[350,330,350,320,340,350][i];s.y1=s.y2=top;s.bottom=top+90;
 });
 STORY_LEVELS[5].goal.kind='shore';
+STORY_LEVELS[5].seals=[{species:'fur',left:6100,right:7250,x:6650,y:620,range:420}];
 STORY_LEVELS.push(chapter(7,'薄冰小径·2','bay',[
  block(-100,500,350),block(1400,2000,395,350,'checkpoint'),
  block(2540,2810,350,350,'floe',490),block(3400,4000,395,350,'checkpoint'),
@@ -176,6 +177,17 @@ STORY_LEVELS.push(chapter(9,'潮汐海湾','bay',[
  block(8600,9300,180,180,'finish')
 ],[[800,1600],[3100,5100],[5800,8600]],[2600,5300],9050,{entry:'',mid:'',exit:'',transition:''},
  {bottom:1040,tide:{amplitude:70,period:24,hold:1.4},goal:{x:9080,y:180,kind:'lighthouse'},decorations:[{kind:'buoy',x:1100,y:380,w:55,h:74},{kind:'buoy',x:6000,y:380,w:55,h:74}]}));
+STORY_LEVELS[8].goal.kind='shore';
+STORY_LEVELS.push(chapter(10,'开冰引潮','bay',[
+ block(-100,500,280),block(500,800,280,395,'ramp'),
+ block(2200,2500,280,280,'checkpoint',650),
+ {...block(2200,2500,950,950,'shore',1280),wallSection:true},
+ block(3900,4300,240,240,'checkpoint',650),
+ {...block(3900,4300,950,950,'shore',1280),wallSection:true},
+ block(6500,7600,240,240,'finish')
+],[[800,2200],[2500,3900],[4300,6500]],[2290,4090],7350,{entry:'',mid:'',exit:'',transition:''},
+ {waterY:380,bottom:1040,basins:[{left:-100,right:2350,initial:380},{left:2350,right:4100,initial:650,target:380,feed:0},{left:4100,right:7600,initial:650,target:380,feed:1}],
+ gates:[{id:'weak-wall',x1:2200,x2:2500,y1:650,y2:650,bottom:950,kind:'weak-wall'},{id:'weak-wall-2',x1:3900,x2:4300,y1:650,y2:650,bottom:950,kind:'weak-wall'}],movingIce:[{id:'rising-rest',x1:3100,x2:3480,y1:620,y2:620,bottom:790,kind:'floe',floeVariant:'floe-original-flat',motion:'water',basin:1,freeboard:-30}],goal:{x:7380,y:240,kind:'lighthouse'}}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -191,7 +203,7 @@ const birdPerches=[
   [[300,'petrel',25],[8900,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
-  level.birds=(birdPerches[index]||[[250,'petrel',25],[7900,'albatross',34]]).map(([x,species,height])=>{
+  level.birds=(birdPerches[index]||[[250,'petrel',25],[7200,'albatross',34]]).map(([x,species,height])=>{
     const ground=level.solids.find(s=>x>=s.x1&&x<=s.x2);
     return {x,y:surfaceAt(ground,x),species,height};
   });
@@ -201,3 +213,4 @@ STORY_LEVELS.forEach((level,index)=>{
 const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
 let floeIndex=0;
 for(const level of LEVELS)for(const solid of level.solids)if(solid.kind==='floe'&&!solid.floeVariant)solid.floeVariant=floeVariants[floeIndex++%floeVariants.length];
+

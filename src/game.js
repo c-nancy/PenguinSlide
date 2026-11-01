@@ -63,7 +63,7 @@ function play(){
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与九章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=`两段练习与十章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){
@@ -215,7 +215,7 @@ try{state.art=await loadArt(level,(done,total)=>{
 });
   const retryCap=snowCapStrip(state.art,{x1:0,x2:180,y1:0,y2:0},[]);
   if(retryCap)$('retry').style.backgroundImage=`url("${retryCap.canvas.toDataURL()}")`;
-  artReady=true;$('loading-status').textContent='旅程已准备好';refreshMenu();}
+  artReady=true;$('loading-status').textContent='去远方吧';refreshMenu();}
 catch(error){$('loading-status').textContent='旅程加载失败，点击 Start 重试';throw error;}
 });
 prepareArt().catch(()=>{});

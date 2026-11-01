@@ -1,5 +1,6 @@
 import {surfaceAt} from './level.js';
 import {cameraY} from './camera.js';
+import {gateSolid} from './ice-gates.js';
 export const THIN_URLS=[new URL('../assets/terrain/floe-variants/thin-break-01.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-02.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-03.png',import.meta.url).href];
 export function advanceThin(world,p,dt){
  for(const s of world.thinActors||[]){
@@ -17,7 +18,7 @@ export function advanceThin(world,p,dt){
    }else {s.restore=safe&&far?(s.restore||0)+dt:0;if(s.restore>=3){s.phase='restoring';s.age=0;}}
   }
  }
- world.solids=[...world.source.solids,...world.actors,...(world.thinActors||[]).filter(s=>s.phase==='intact'||s.phase==='cracking')];
+ world.solids=[...world.source.solids,...world.actors,...(world.thinActors||[]).filter(s=>s.phase==='intact'||s.phase==='cracking'),...(world.gateActors||[]).filter(gateSolid)];
 }
 export function touchThin(world,p,previous){
  for(const s of world.thinActors||[]){
