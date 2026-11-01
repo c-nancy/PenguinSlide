@@ -6,6 +6,7 @@ import {drawDizzyEffect} from './dizzy-effect.js';
 import {drawImpactEffects} from './impact-effects.js';
 import {CONFIG,remainingCharge} from './physics.js';
 import {surfaceAt} from './level.js';
+import {buoySurfaceY} from './tides.js';
 import {drawSprite,animationFrame,surfaceTransform} from './art.js';
 import {characterMotion} from './character-state.js';
 import {drawEnergyBubbles} from './energy-bubbles.js';
@@ -100,7 +101,7 @@ function decorations(c,art,level,cam,behind=false){
     if(item.x+w<cam.x||item.x-w>cam.x+W)continue;
     c.save();if(behind)c.globalAlpha=.42;
     if(GROUND_PROPS.has(item.kind))drawGroundedSprite(c,art,item.kind,level,cam,item.x,item.y,w,h);
-    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,item.y-h-cam.y+(item.kind==='buoy'?h*.4:0),w,h);
+    else drawSprite(c,art,item.kind,item.x-w/2-cam.x,(item.kind==='buoy'?buoySurfaceY(item,level):item.y)-h-cam.y+(item.kind==='buoy'?h*.4:0),w,h);
     c.restore();
   }
 }

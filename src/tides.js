@@ -1,6 +1,9 @@
 export function tideSurface(level,time){
  const tide=level.tide;
- return tide?level.waterY-tide.amplitude*Math.sin(time*2*Math.PI/tide.period+(tide.phase||0)):level.waterY;
+ return tide?level.waterY-tide.amplitude*Math.max(-1,Math.min(1,Math.sin(time*2*Math.PI/tide.period+(tide.phase||0))*(tide.hold||1))):level.waterY;
+}
+export function buoySurfaceY(item,level){
+ return item.y+(level.tide?level.waterY-(level.source||level).waterY:0);
 }
 export function advanceTide(world,p,input,dt){
  world.tideTime=(world.tideTime||0)+dt;
@@ -10,5 +13,4 @@ export function advanceTide(world,p,input,dt){
  if(p.grounded&&p.y>world.waterY){p.grounded=false;p.wet=true;}
  world.tideDiving=input.y>0;
  world.tidePreviousY=p.y;
- world.decorations=(world.source.decorations||[]).map(d=>d.kind==='buoy'?{...d,y:world.waterY}:d);
 }

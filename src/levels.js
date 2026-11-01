@@ -171,11 +171,11 @@ STORY_LEVELS.push(chapter(9,'潮汐海湾','bay',[
  block(-100,500,280),block(500,800,280,420,'ramp'),
  block(1600,1900,435),block(1900,2400,435,280,'ramp'),block(2400,2800,280,280,'checkpoint'),block(2800,3100,280,420,'ramp'),
  block(3650,4000,390,390,'floe',570),
- block(4300,4600,435),block(4600,5100,435,280,'ramp'),block(5100,5500,280,280,'checkpoint'),block(5500,5800,280,420,'ramp'),
+ block(5100,5500,180,180,'checkpoint'),block(5500,5800,180,420,'ramp'),
  block(6400,6800,400,400,'floe',570),block(7100,7450,295,295,'floe',540),
- block(7700,8000,435),block(8000,8600,435,280,'ramp'),block(8600,9300,280,280,'finish')
-],[[800,1600],[3100,4300],[5800,7700]],[2600,5300],9050,{entry:'',mid:'',exit:'',transition:''},
- {bottom:1040,tide:{amplitude:55,period:24},goal:{x:9080,y:280,kind:'lighthouse'},decorations:[{kind:'buoy',x:1100,y:380,w:55,h:74},{kind:'buoy',x:6000,y:380,w:55,h:74}]}));
+ block(8600,9300,180,180,'finish')
+],[[800,1600],[3100,5100],[5800,8600]],[2600,5300],9050,{entry:'',mid:'',exit:'',transition:''},
+ {bottom:1040,tide:{amplitude:70,period:24,hold:1.4},goal:{x:9080,y:180,kind:'lighthouse'},decorations:[{kind:'buoy',x:1100,y:380,w:55,h:74},{kind:'buoy',x:6000,y:380,w:55,h:74}]}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
