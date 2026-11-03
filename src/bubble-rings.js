@@ -1,3 +1,4 @@
+import {iceBottomAt} from './bottom-edge.js';
 import {hasShape,shapeOverlap} from './shape-collision.js';
 import {surfaceAt} from './level.js';
 import {waterCurrentAt} from './currents.js';
@@ -27,7 +28,7 @@ function ringBounds(r,x,y){
 function blocked(level,x,y,r){
  const box=ringBounds(r,x,y);
  if(box.top<=level.waterY||box.bottom>=level.bottom)return true;
- return level.solids.some(s=>hasShape(s)?shapeOverlap(s,box):box.right>s.x1&&box.left<s.x2&&box.bottom>surfaceAt(s,Math.max(s.x1,Math.min(s.x2,x)))&&box.top<s.bottom);
+ return level.solids.some(s=>hasShape(s)?shapeOverlap(s,box):box.right>s.x1&&box.left<s.x2&&box.bottom>surfaceAt(s,Math.max(s.x1,Math.min(s.x2,x)))&&box.top<iceBottomAt(s,x));
 }
 export function updateRings(rings,level,dt,bubbles=[],time=0){
  for(const r of rings){

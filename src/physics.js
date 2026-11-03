@@ -1,3 +1,4 @@
+import {iceBottomAt} from './bottom-edge.js';
 import {advanceThin,touchThin} from './thin-ice.js';
 import {advanceTide} from './tides.js';
 import {advanceGates} from './ice-gates.js';
@@ -7,6 +8,7 @@ import { HEALTH, healthState, resolveImpacts, landingAngle } from './health.js';
 import {hasShape,shapeOverlap,shapeSweep} from './shape-collision.js';
 import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
 import {waterCurrentAt} from './currents.js';
+import {collideReefs} from './reefs.js';
 
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
@@ -39,7 +41,7 @@ export function resetPlayer(p,level,fromStart=false) {
 }
 function waterColumn(p,level) {
   return level.waters.some(([a,b])=>p.x>=a&&p.x<=b) &&
-    !level.solids.some(s=>hasShape(s)?shapeOverlap(s,{left:p.x-.1,right:p.x+.1,top:p.y-.1,bottom:p.y+.1}):p.x>s.x1&&p.x<s.x2&&p.y>surfaceAt(s,p.x)&&p.y<s.bottom);
+    !level.solids.some(s=>hasShape(s)?shapeOverlap(s,{left:p.x-.1,right:p.x+.1,top:p.y-.1,bottom:p.y+.1}):p.x>s.x1&&p.x<s.x2&&p.y>surfaceAt(s,p.x)&&p.y<iceBottomAt(s,p.x));
 }
 function recordDepth(p,level) {
   if(level.depthCharge===false)return;
@@ -72,8 +74,8 @@ function supportFor(p,level) {
   // same footprint. Otherwise an overhanging body can land without being able
   // to walk or jump, and the painted slope blocks both movement axes.
   const atFoot=s=>Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5;
-  return level.solids.find(s=>p.x>=s.x1&&p.x<=s.x2&&atFoot(s))||
-    level.solids.find(s=>(hasShape(s)||level.actors?.length)&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&atFoot(s));
+  return level.solids.find(s=>s.kind!=='reef'&&p.x>=s.x1&&p.x<=s.x2&&atFoot(s))||
+    level.solids.find(s=>s.kind!=='reef'&&(hasShape(s)||level.actors?.length)&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2&&atFoot(s));
 }
 function exposedSideTop(s,left,level){
   const x=left?s.x1:s.x2,y=left?s.y1:s.y2;
@@ -92,6 +94,7 @@ function touchingSurfaces(p,level){
   if(p.x>=level.width-r-e)keys.push('edge:right');
   if(p.y+h>=level.bottom-e)keys.push('floor');
   for(const [index,s] of level.solids.entries()){
+    if(s.kind==='reef')continue;
     if(hasShape(s)){
       const near=(dx,dy)=>shapeOverlap(s,{left:p.x+dx-r,right:p.x+dx+r,top:p.y+dy-h,bottom:p.y+dy+h});
       if(near(e,0))keys.push(`solid:${index}:left`);
@@ -104,7 +107,7 @@ function touchingSurfaces(p,level){
     if(p.y-h<s.bottom&&Math.abs(p.x-r-s.x2)<e&&p.y+h>exposedSideTop(s,false,level)+4)keys.push(`solid:${index}:right`);
     if(p.x+r<=s.x1||p.x-r>=s.x2)continue;
     if(Math.abs(p.y+h-surfaceAt(s,p.x))<e)keys.push(`solid:${index}:top`);
-    if(Math.abs(p.y-h-s.bottom)<e)keys.push(`solid:${index}:bottom`);
+    if(Math.abs(p.y-h-iceBottomAt(s,p.x))<e)keys.push(`solid:${index}:bottom`);
   }
   return keys;
 }
@@ -222,19 +225,19 @@ function stepCore(p,input,level,dt) {
   // from inside otherwise blocks both axes, including movement away from ice.
   const solidContains=(s,x,y)=>{
     if(hasShape(s))return shapeOverlap(s,{left:x-CONFIG.radius,right:x+CONFIG.radius,top:y-CONFIG.halfHeight,bottom:y+CONFIG.halfHeight});
-    if(x+CONFIG.radius<=s.x1||x-CONFIG.radius>=s.x2||y-CONFIG.halfHeight>=s.bottom)return false;
+    if(x+CONFIG.radius<=s.x1||x-CONFIG.radius>=s.x2||y-CONFIG.halfHeight>=iceBottomAt(s,x))return false;
     return y+CONFIG.halfHeight>Math.min(surfaceAt(s,Math.max(s.x1,x-CONFIG.radius)),surfaceAt(s,Math.min(s.x2,x+CONFIG.radius)))+1e-5;
   };
   for(const s of level.solids){
     if(hasShape(s)||p.x<=s.x1||p.x>=s.x2||p.y<=surfaceAt(s,p.x)+CONFIG.halfHeight||!solidContains(s,p.x,p.y))continue;
     if(p.grounded&&p.x>=s.x1&&p.x<=s.x2&&Math.abs(p.y+CONFIG.halfHeight-surfaceAt(s,p.x))<5)continue;
     const candidates=[{x:s.x1-CONFIG.radius,y:p.y},{x:s.x2+CONFIG.radius,y:p.y},
-      {x:p.x,y:Math.min(s.y1,s.y2)-CONFIG.halfHeight},{x:p.x,y:s.bottom+CONFIG.halfHeight}];
+      {x:p.x,y:Math.min(s.y1,s.y2)-CONFIG.halfHeight},{x:p.x,y:iceBottomAt(s,p.x)+CONFIG.halfHeight}];
     candidates.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
     const free=candidates.find(q=>q.x>=CONFIG.radius&&q.x<=level.width-CONFIG.radius&&q.y<=level.bottom-CONFIG.halfHeight&&!level.solids.some(o=>solidContains(o,q.x,q.y)));
     if(free){p.x=free.x;p.y=free.y;p.vx=0;p.vy=0;p.grounded=false;p.wet=waterColumn(p,level)&&p.y>=level.waterY;}
   }
-  const shapes=level.solids.filter(hasShape);
+  const shapes=level.solids.filter(s=>s.kind!=='reef'&&hasShape(s));
   // Painted corner landings can sit just below the authored top. Resolve them
   // onto that same top before support and movement use it.
   if(p.grounded&&!p.wet){
@@ -282,6 +285,7 @@ function stepCore(p,input,level,dt) {
   const bounded=clamp(p.x,CONFIG.radius,level.width-CONFIG.radius);
   if(bounded!==p.x){impact(p.vx>0?'edge:right':'edge:left',Math.abs(p.vx),p.vx>0?-1:1,0);p.vx=0;}p.x=bounded;
   for(const [index,s] of level.solids.entries()){
+    if(s.kind==='reef')continue;
     if(hasShape(s)){
       if((wasGrounded&&support===s)||(p.vy<0&&p.y+CONFIG.halfHeight<=surfaceAt(s,p.x)+5))continue;
       const hit=shapeSweep(s,'x',oldX,p.x,p.y,CONFIG.radius,CONFIG.halfHeight);
@@ -289,12 +293,13 @@ function stepCore(p,input,level,dt) {
       continue;
     }
     const left=s.x1-CONFIG.radius,right=s.x2+CONFIG.radius;
-    if(p.y-CONFIG.halfHeight>=s.bottom-2)continue;
+    if(p.y-CONFIG.halfHeight>=iceBottomAt(s,p.x)-2)continue;
     if(oldX<=left&&p.x>left&&p.y+CONFIG.halfHeight>exposedSideTop(s,true,level)+4){impact(`solid:${index}:left`,Math.max(0,p.vx),-1,0);p.x=left;p.vx=0;}
     if(oldX>=right&&p.x<right&&p.y+CONFIG.halfHeight>exposedSideTop(s,false,level)+4){impact(`solid:${index}:right`,Math.max(0,-p.vx),1,0);p.x=right;p.vx=0;}
   }
   p.y+=p.vy*dt;p.grounded=false;
   for(const [index,s] of level.solids.entries()){
+    if(s.kind==='reef')continue;
     if(p.x+CONFIG.radius<=s.x1||p.x-CONFIG.radius>=s.x2)continue;
     const top=surfaceAt(s,p.x),t=tangent(s);
     const follow=groundMotion&&(hasShape(s)?support===s&&p.x+CONFIG.radius>s.x1&&p.x-CONFIG.radius<s.x2:
@@ -327,9 +332,9 @@ function stepCore(p,input,level,dt) {
         impact(`solid:${index}:${down?'top':'bottom'}`,Math.abs(p.vy),0,down?-1:1,down?{kind:'landing',angle:landingAngle(incoming.vx-(s.id===p.relativeIce?0:s.vx||0),incoming.vy)}:{});
         p.y=down&&hit.position+CONFIG.halfHeight<=top+CONFIG.halfHeight?top-CONFIG.halfHeight:hit.position;p.vy=0;p.grounded=down;
       }
-    }else if(p.vy<0&&oldY-CONFIG.halfHeight>=s.bottom-2&&p.y-CONFIG.halfHeight<s.bottom){
+    }else if(p.vy<0&&oldY-CONFIG.halfHeight>=iceBottomAt(s,p.x)-2&&p.y-CONFIG.halfHeight<iceBottomAt(s,p.x)){
       impact(`solid:${index}:bottom`,-p.vy,0,1);
-      p.y=s.bottom+CONFIG.halfHeight;p.vy=0;
+      p.y=iceBottomAt(s,p.x)+CONFIG.halfHeight;p.vy=0;
     }
   }
   if(p.y+CONFIG.halfHeight>level.bottom){impact('floor',Math.max(0,incoming.vy),0,-1,{kind:'landing',angle:landingAngle(incoming.vx,incoming.vy)});p.y=level.bottom-CONFIG.halfHeight;p.vy=Math.min(0,p.vy);}
@@ -338,6 +343,7 @@ function stepCore(p,input,level,dt) {
     p.rockBounce=false;
     if(p.rockTrip){p.rockTrip=false;p.forceSlide=.85;}
   }
+  collideReefs(p,level,{x:oldX,y:oldY},impact);
   collideRocks(p,level,{x:oldX,y:oldY});
   p.sliding=!p.wet&&isSliding(p);
   p.wet=p.y>level.waterY&&waterColumn(p,level);
@@ -346,7 +352,8 @@ function stepCore(p,input,level,dt) {
     if(speed>=8)p.swimSideRadius=Math.max(CONFIG.radius,34.5*Math.abs(incoming.vx)/speed+12*Math.abs(incoming.vy)/speed);
     const radius=p.swimSideRadius||CONFIG.radius;
     for(const [index,s] of level.solids.entries()){
-      if(p.y-CONFIG.halfHeight>=s.bottom||p.y+CONFIG.halfHeight<=Math.min(s.y1,s.y2)+5)continue;
+    if(s.kind==='reef')continue;
+      if(p.y-CONFIG.halfHeight>=iceBottomAt(s,p.x)||p.y+CONFIG.halfHeight<=Math.min(s.y1,s.y2)+5)continue;
       const side=p.x<=s.x1?-1:p.x>=s.x2?1:0;if(!side)continue;
       if(!hasShape(s)&&p.y+CONFIG.halfHeight<=exposedSideTop(s,side<0,level)+5)continue;
       const before=p.x;

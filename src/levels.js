@@ -1,4 +1,5 @@
 import {surfaceAt} from './level.js';
+import {reefBlock} from './reefs.js';
 
 const block=(x1,x2,y1,y2=y1,kind='shore',bottom=1280)=>({x1,x2,y1,y2,bottom,kind});
 function chapter(number,title,theme,solids,waters,checkpointXs,goalX,story,extra={}){
@@ -188,6 +189,21 @@ STORY_LEVELS.push(chapter(10,'开冰引潮','bay',[
 ],[[800,2200],[2500,3900],[4300,6500]],[2290,4090],7350,{entry:'',mid:'',exit:'',transition:''},
  {waterY:380,bottom:1040,basins:[{left:-100,right:2350,initial:380},{left:2350,right:4100,initial:650,target:380,feed:0},{left:4100,right:7600,initial:650,target:380,feed:1}],
  gates:[{id:'weak-wall',x1:2200,x2:2500,y1:650,y2:650,bottom:950,kind:'weak-wall'},{id:'weak-wall-2',x1:3900,x2:4300,y1:650,y2:650,bottom:950,kind:'weak-wall'}],movingIce:[{id:'rising-rest',x1:3100,x2:3480,y1:620,y2:620,bottom:790,kind:'floe',floeVariant:'floe-original-flat',motion:'water',basin:1,freeboard:-30}],goal:{x:7380,y:240,kind:'lighthouse'}}));
+STORY_LEVELS[9].goal.kind='shore';
+const caveRoof=(x1,x2,bottom)=>({...block(x1,x2,-400,-400,'tunnel',bottom),caveRoof:true});
+STORY_LEVELS.push(chapter(11,'冰洞暗礁','cave',[
+ block(-100,500,330),block(500,750,330,395,'ramp'),
+ caveRoof(900,1800,500),caveRoof(1800,2400,760),
+ reefBlock(1100,650,'reef-01'),reefBlock(2050,400,'reef-03'),
+ block(2700,2900,395,350,'ramp'),block(2900,3100,350,350,'checkpoint'),block(3100,3300,350,395,'ramp'),
+ caveRoof(3500,4400,440),caveRoof(4700,5300,780),caveRoof(5600,6200,430),
+ reefBlock(3650,650,'reef-02'),reefBlock(4800,550,'reef-01'),reefBlock(5650,650,'reef-02'),
+ block(6500,7100,280,280,'checkpoint'),
+ caveRoof(7300,7900,760),caveRoof(8250,9000,430),caveRoof(9150,9500,760),
+ reefBlock(7450,550,'reef-01'),reefBlock(8250,650,'reef-02'),reefBlock(9800,500,'reef-02'),
+ block(10300,10600,395,330,'ramp'),block(10600,11100,330,330,'finish')
+],[[750,2700],[3300,6500],[7100,10300]],[2940,6800],10850,
+ {entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:10880,y:330,kind:'lighthouse'}}));
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -200,7 +216,9 @@ const birdPerches=[
   [[250,'petrel',25],[7900,'albatross',34]],
   [[250,'petrel',25],[8731,'albatross',34]],
   [[300,'petrel',25],[9500,'albatross',34]],
-  [[300,'petrel',25],[8900,'albatross',34]]
+  [[300,'petrel',25],[8900,'albatross',34]],
+  [[250,'petrel',25],[7200,'albatross',34]],
+  [[250,'petrel',25],[10700,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
   level.birds=(birdPerches[index]||[[250,'petrel',25],[7200,'albatross',34]]).map(([x,species,height])=>{

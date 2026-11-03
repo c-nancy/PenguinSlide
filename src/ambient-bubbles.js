@@ -1,3 +1,4 @@
+import {iceBottomAt} from './bottom-edge.js';
 import {CONFIG} from './physics.js';
 import {surfaceAt} from './level.js';
 import {hasShape,shapeOverlap} from './shape-collision.js';
@@ -10,7 +11,7 @@ function clearOfIce(level,x,y,r,padding=5){
  const box={left:x-r-padding,right:x+r+padding,top:y-r-padding,bottom:y+r+padding};
  return !(level.solids||[]).some(s=>{
   if(hasShape(s))return shapeOverlap(s,box);
-  if(box.right<=s.x1||box.left>=s.x2||box.top>=s.bottom)return false;
+  if(box.right<=s.x1||box.left>=s.x2||box.top>=iceBottomAt(s,x))return false;
   const a=Math.max(s.x1,box.left),b=Math.min(s.x2,box.right);
   return box.bottom>Math.min(surfaceAt(s,a),surfaceAt(s,b));
  });

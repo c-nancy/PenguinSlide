@@ -30,7 +30,9 @@ export function drawGroundedSprite(c,art,id,level,cam,x,y,width,height,pivot=.5,
   c.save();c.translate(x-cam.x,placement.y-cam.y);
   // Vertical shear seats the full foundation on a slope while keeping towers
   // and posts upright. The painted foot, not transparent padding, touches ice.
-  c.transform(1,placement.slope,0,1,0,0);
+  const family=id==='checkpoint-family-standing'||id==='checkpoint-family-greeting';
+  const shear=family?Math.max(-.06,Math.min(.06,placement.slope*.25)):placement.slope;
+  c.transform(1,shear,0,1,0,0);
   if(mirror)c.scale(-1,1);
   drawSprite(c,art,id,mirror?-(1-pivot)*width:placement.drawX,placement.drawY,width,height);c.restore();
   return placement;

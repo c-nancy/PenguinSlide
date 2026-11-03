@@ -23,7 +23,7 @@ export function resolveImpacts(p,impacts,contacts){
     if(impact.kind==='landing'&&!(impact.angle>HEALTH.safeLandingAngle+1e-9))continue;
     if(previous.has(impact.key)||impactDamage(impact.speed)===0)continue;
     if(!strongest||impact.speed>strongest.speed)strongest=impact;
-    if(Math.abs(impact.nx)>.9&&Math.abs(impact.ny)<.1&&(!wall||impact.speed>wall.speed))wall=impact;
+    if((impact.kind==='reef'||Math.abs(impact.nx)>.9&&Math.abs(impact.ny)<.1)&&(!wall||impact.speed>wall.speed))wall=impact;
   }
   if(!strongest)return;
   if(p.invulnerable<=0){
@@ -37,7 +37,7 @@ export function resolveImpacts(p,impacts,contacts){
   }
   if(wall){
     const speed=Math.max(HEALTH.minRecoil,Math.min(HEALTH.maxRecoil,wall.speed*HEALTH.recoilFactor));
-    p.pendingKnockback={vx:wall.nx*speed,vy:p.vy};
+    p.pendingKnockback={vx:wall.nx*speed,vy:wall.kind==='reef'?wall.ny*speed:p.vy};
     p.hitStop=HEALTH.hitStop;p.controlLock=HEALTH.recoilRecovery;
     p.reaction={kind:'wall',nx:wall.nx,speed};p.vx=0;p.vy=0;p.boosting=false;
   }

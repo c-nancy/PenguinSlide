@@ -1,4 +1,6 @@
 import {releaseImageURL} from './release-images.js';
+import {BOTTOM_EDGE_URLS} from './bottom-edge.js';
+import {REEF_URLS} from './reefs.js';
 import {THIN_URLS} from './thin-ice.js';
 import {WALL_BREAK_URLS} from './ice-gates.js';
 import {SEAL_URLS} from './seals.js';
@@ -36,7 +38,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const [environment,character,campaign,stones,floes,items,stoneAnimations,birds]=await Promise.all([json(ENV+'manifest.json'),json(CHARACTER+'manifest.json'),json(CAMPAIGN+'manifest.json'),json(STONES+'manifest.json'),json(FLOES+'manifest.json'),json(ITEMS+'manifest.json'),json(STONE_ANIMATIONS+'manifest.json'),json(BIRDS+'manifest.json')]);
   const images=new Map();
   const files=[...items.sprites.map(item=>ITEMS+item.file),...floes.sprites.map(item=>FLOES+item.file),...stones.sprites.map(item=>STONES+item.file),...environment.backgrounds.map(item=>new URL(item.file,ENV).href),...environment.sprites.map(item=>new URL(item.file,ENV).href),...campaign.backgrounds.map(item=>CAMPAIGN+item.file),...campaign.sprites.map(item=>CAMPAIGN+item.file),...Object.values(character.animations).map(clip=>CHARACTER+clip.spritesheet)];
-  files.push(...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
+  files.push(...BOTTOM_EDGE_URLS,...REEF_URLS,...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
   const loadImage=createImageQueue(url=>new Promise((resolve,reject)=>{
     const image=new Image();image.onload=()=>{images.set(url,image);resolve();};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
   }),3);
@@ -51,6 +53,8 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
     if(level.thinIce?.length||level.solids?.some(s=>s.thin))needed.push(...THIN_URLS);
     if(level.seals?.length)needed.push(...SEAL_URLS);
     if(level.gates?.length)needed.push(...WALL_BREAK_URLS);
+    if(level.solids?.some(s=>s.kind==='reef'))needed.push(...REEF_URLS);
+    if(level.solids?.some(s=>s.kind==='tunnel'))needed.push(...BOTTOM_EDGE_URLS);
     if(level.tutorial)needed.push(TUTORIAL_KEYS_URL);
     const urls=[...new Set(needed)];let completed=0;report(0,urls.length);
     await Promise.all(urls.map(url=>loadImage(url,background).then(()=>report(++completed,urls.length))));

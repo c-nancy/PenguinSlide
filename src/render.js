@@ -1,3 +1,5 @@
+import {clipIceBottom,drawIceBottom} from './bottom-edge.js';
+import {drawReef} from './reefs.js';
 import {drawBreakableWalls} from './ice-gates.js';
 import {drawThin} from './thin-ice.js';
 import {drawSeals} from './seals.js';
@@ -30,6 +32,17 @@ const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
 function terrain(c,art,s,cam,solids){
   if(s.kind==='weak-wall')return;
+  if(s.kind==='reef'){
+    drawReef(c,art,s,cam);
+    // Match the existing seabed tiles exactly, but put their pebbles in front
+    // of the reef's foot so its cropped bottom edge is buried in the bed.
+    const seabedY=s.seabedY??s.bottom;
+    c.save();c.beginPath();c.rect(s.x1-cam.x,seabedY-cam.y-28,s.x2-s.x1,74);c.clip();
+    const left=Math.max(s.x1,cam.x),right=Math.min(s.x2,cam.x+W);
+    for(let x=Math.floor(left/240)*240;x<right;x+=240)
+      drawSprite(c,art,'seabed',x-cam.x,seabedY-cam.y-28,252,74);
+    c.restore();return;
+  }
   if(s.wallSection){
     if(art.wallTexture)c.drawImage(art.wallTexture,s.x1-cam.x,s.y1-cam.y,s.x2-s.x1,s.bottom-s.y1);
     drawWallPencilEdges(c,art,{...s,y1:s.y1-SNOW_CAP.wallStart,y2:s.y2-SNOW_CAP.wallStart},solids,cam);return;
@@ -39,11 +52,11 @@ function terrain(c,art,s,cam,solids){
   if(s.kind==='floe'||s.kind==='tunnel'){
     // These sprites already contain their own irregular ice silhouette.
     // Leave transparent corners clear instead of backing them with a box.
-    c.save();polygon(c,s,cam);c.clip();
+    c.save();if(s.kind==='tunnel')clipIceBottom(c,s,cam);else{polygon(c,s,cam);c.clip();}
     const slab=s.kind==='tunnel'?modularSlab(art,t.width,s.bottom-s.y1):null;
     if(slab){c.save();c.transform(1,t.slope,0,1,t.x,t.y);c.drawImage(slab.canvas,0,slab.y,slab.width,slab.height);c.restore();drawWallCracks(c,art,s,cam);}
     else drawFloatingIce(c,art,s,cam);
-    c.restore();return;
+    c.restore();if(s.kind==='tunnel')drawIceBottom(c,art,s,cam);return;
   }
   c.save();polygon(c,s,cam);c.clip();
   c.transform(1,t.slope,0,1,t.x,t.y);

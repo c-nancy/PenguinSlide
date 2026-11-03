@@ -63,7 +63,7 @@ function play(){
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与十章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=`两段练习与 ${LEVELS.length-2} 章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){

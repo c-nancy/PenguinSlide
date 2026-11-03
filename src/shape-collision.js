@@ -1,10 +1,12 @@
 import {FLOE_VARIANT_MASKS} from './floe-variant-masks.js';
 import {FLOE_MASK} from './floe-mask-data.js';
+import {reefColumns} from './reefs.js';
 
 const cache=new WeakMap(),cell=2;
-export const hasShape=s=>s.kind==='floe';
+export const hasShape=s=>s.kind==='floe'||s.kind==='reef';
 function columnsFor(s){
   if(cache.has(s))return cache.get(s);
+  if(s.kind==='reef'){const columns=reefColumns(s);cache.set(s,columns);return columns;}
   const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,mask=FLOE_VARIANT_MASKS[s.floeVariant]||FLOE_MASK,columns=[];
   for(let x=0;x<width;x+=cell){
     const center=Math.min(width,x+cell/2),band=Math.floor(center/4)*4,step=Math.min(4,width-band),overlap=band+step<width?.35:0;
@@ -24,7 +26,7 @@ function columnsFor(s){
 export function shapeOverlap(s,box){
   if(s.localShape){const dx=s.x1-s.localShape.x1,dy=s.y1-s.localShape.y1;return shapeOverlap(s.localShape,{left:box.left-dx,right:box.right-dx,top:box.top-dy,bottom:box.bottom-dy});}
   if(box.right<=s.x1||box.left>=s.x2||box.top>=s.bottom||box.bottom<=Math.min(s.y1,s.y2))return false;
-  const columns=columnsFor(s),start=Math.max(0,Math.floor((box.left-s.x1)/cell)),end=Math.min(columns.length,Math.ceil((box.right-s.x1)/cell));
+  const columns=columnsFor(s),step=s.kind==='reef'?(s.x2-s.x1)/columns.length:cell,start=Math.max(0,Math.floor((box.left-s.x1)/step)),end=Math.min(columns.length,Math.ceil((box.right-s.x1)/step));
   for(let i=start;i<end;i++)for(const [top,bottom] of columns[i].runs)
     if(bottom>top&&box.bottom>top+1e-5&&box.top<bottom-1e-5)return true;
   return false;
