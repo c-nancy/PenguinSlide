@@ -51,7 +51,7 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 @media(max-width:550px){.chapter{padding:6px 8px}.chapter .health-box{width:118px}.movement{padding:6px 8px;gap:8px}.game-frame[data-mode=finished] .overlay.modal{justify-content:center;padding-left:0}.game-frame[data-mode=finished] .dialog{width:94%;max-width:94%;padding:18px 20px}.game-frame[data-mode=finished] .dialog h2{font-size:19px}.game-frame[data-mode=finished] .dialog p{font-size:11px}}
 
 /* Observational pencil cloud masses carry text in their bright inner volume. */
-:root{--cloud-art:url('./assets/ui/cloud-dialog.png');--cloud-toast:url('./assets/ui/cloud-toast.png')}
+:root{--cloud-art:url('./assets/optimized/1e50e2473223954476ffc3ff8ad8542ada766e0d8ac48577958a9dae50b01773.webp');--cloud-toast:url('./assets/optimized/c9db2d8340f54d9a8c9d391026e9d10e1f5cec760a37910e8c9609ab7a9fecea.webp')}
 .dialog,.game-frame[data-mode=finished] .dialog{
   --cloud-rim:36px;border:var(--cloud-rim) solid transparent;
   border-image:none;background:var(--cloud-art) center / 100% 100% no-repeat border-box;
@@ -84,12 +84,12 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 
 /* A pencil route drawn directly on the scene, with a travelling penguin. */
 .route{padding:0;gap:12px;background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;height:42px}
-.route-nest{width:42px;height:22px;flex:none;background:url('./assets/terrain/items/penguin-nest.png') center / contain no-repeat}
+.route-nest{width:42px;height:22px;flex:none;background:url('./assets/optimized/acfacebfbd93200b363bd82cd3eb4ab0f360b2eab109ecb4377f23d7dd67d35a.webp') center / contain no-repeat}
 .game-frame[data-chapter="tutorial-1"] .route-nest{display:none}
-.route-flag{width:27px;height:34px;flex:none;transform:translateY(-6px);background:url('./assets/terrain/items/finish-flag.png') center / contain no-repeat}
+.route-flag{width:27px;height:34px;flex:none;transform:translateY(-6px);background:url('./assets/optimized/8a0c516d85f5d82dd24dffd63139c623f179d49e53331d35c5b8118a12e3e9e2.webp') center / contain no-repeat}
 .route-track{width:180px;height:2px;background:#77796a55;border-radius:40%}
 .route-track>i{background:#777565;height:1px}
-.route-track #route-dot{top:auto;bottom:-1px;left:0;width:34px;height:19px;border:0;border-radius:0;background:url('./assets/character/slide.png') center bottom / contain no-repeat;transform:translateX(-50%)}
+.route-track #route-dot{top:auto;bottom:-1px;left:0;width:34px;height:19px;border:0;border-radius:0;background:url('./assets/optimized/17a66e431d563ed4663f7ae3d682d9989b01f8b5fc42bdc6777219dee1d94de9.webp') center bottom / contain no-repeat;transform:translateX(-50%)}
 .underwater .route-track{background:#77796a55}.underwater .route-track>i{background:#777565}
 @media(max-width:850px){.route{padding:0;gap:8px}.route-track{width:100px}.route-nest{width:33px}.route-flag{width:23px}}
 
@@ -144,7 +144,7 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 @media(max-width:550px){#retry{width:108px;height:43px;padding-top:8px;font-size:10px;gap:5px}}
 
 /* The chapter picker uses the wider toast cloud and a safe central text area. */
-.game-frame[data-mode=chapters] .dialog{background-image:url('./assets/ui/cloud-toast.png');border:0;padding:150px 80px 42px;width:min(850px,94%)}
+.game-frame[data-mode=chapters] .dialog{background-image:url('./assets/optimized/c9db2d8340f54d9a8c9d391026e9d10e1f5cec760a37910e8c9609ab7a9fecea.webp');border:0;padding:150px 80px 42px;width:min(850px,94%)}
 .game-frame[data-mode=chapters] #dialog-title{max-width:76%;margin:0 auto 14px;font-size:clamp(16px,2vw,23px);line-height:1.45;text-wrap:balance}
 .game-frame[data-mode=chapters] .chapter-list{width:68%;margin:0 auto 12px}
 @media(max-width:1100px){

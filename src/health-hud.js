@@ -1,4 +1,5 @@
-const fishURL=new URL('../assets/ui/health-fish.png',import.meta.url).href;
+import {releaseImageURL} from './release-images.js';
+const fishURL=releaseImageURL(new URL('../assets/ui/health-fish.png',import.meta.url).href);
 
 export function healthFishFills(health){
   const value=Math.max(0,Math.min(100,Number.isFinite(health)?health:0));
