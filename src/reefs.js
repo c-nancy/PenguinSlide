@@ -2,8 +2,12 @@ import {REEF_MASKS} from './reef-mask-data.js';
 export const REEF_URLS=[
  new URL('../assets/terrain/reefs/reef-01.png',import.meta.url).href,
  new URL('../assets/terrain/reefs/reef-02.png',import.meta.url).href,
- new URL('../assets/terrain/reefs/reef-03.png',import.meta.url).href
+ new URL('../assets/terrain/reefs/reef-03.png',import.meta.url).href,
+ new URL('../assets/terrain/ice-blocks/ice-block-01.png',import.meta.url).href,
+ new URL('../assets/terrain/ice-blocks/ice-block-02.png',import.meta.url).href,
+ new URL('../assets/terrain/ice-blocks/ice-block-03.png',import.meta.url).href
 ];
+export const obstacleAssetPath=id=>`assets/terrain/${id.startsWith('ice-block-')?'ice-blocks':'reefs'}/${id}.png`;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function reefBlock(x,width,variant,base=1040){
  const mask=REEF_MASKS[variant],height=width*mask.rect[3]/mask.rect[2],bottom=base+32;
@@ -53,6 +57,6 @@ export function collideReefs(p,level,old,impact){
  if(y>p.y)p.vy=Math.min(0,p.vy);
 }
 export function drawReef(c,art,s,cam){
- const im=art.images.get(REEF_URLS[Number(s.reefVariant.slice(-2))-1]);if(!im)return;
+ const im=art.images.get(REEF_URLS[Number(s.reefVariant.slice(-2))-1+(s.reefVariant.startsWith('ice-block-')?3:0)]);if(!im)return;
  c.drawImage(im,...REEF_MASKS[s.reefVariant].rect,s.x1-cam.x,s.y1-cam.y,s.x2-s.x1,s.bottom-s.y1);
 }

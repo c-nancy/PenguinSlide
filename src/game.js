@@ -248,7 +248,7 @@ function update(dt){
   updateRings(state.rings,movingWorld(p,level),dt,state.ambientBubbles,state.time);
   updateAmbientBubbles(state.ambientBubbles,p,previous,state.time,movingWorld(p,level));
   bubbleSound.update(state.ambientBubbles,state.rings);
-  updateBirds(state.birds,p,dt);
+  updateBirds(state.birds,p,dt,movingWorld(p,level));
   if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
   state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);
   if(p.impactEffect)addImpactEffect(state,p.impactEffect);

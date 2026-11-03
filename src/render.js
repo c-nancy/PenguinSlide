@@ -201,13 +201,16 @@ export function render(c,state,level){
     c.save();c.beginPath();for(const r of regions)c.rect(r.left-cam.x,r.waterY-cam.y,r.right-r.left,Math.max(0,level.bottom-r.waterY));c.clip();
     drawAmbientBubbles(c,art,state.ambientBubbles,cam,time);c.restore();
   }
-  // Camera limits keep the seabed lower edge at the viewport bottom.
-  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240){
-    drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);if(x%480===0){
+  // Kelp includes its own rock base; bury that behind the continuous pebble
+  // row rather than painting a second set of stone outlines on top of it.
+  for(let x=Math.floor(cam.x/480)*480;x<cam.x+W+480;x+=480){
     const index=((x/480)%3+3)%3,id=['kelp','kelp-02','kelp-03'][index],sprite=art.sprites.get(id)||art.sprites.get('kelp');
     const ratio=sprite?.rect?sprite.rect.w/sprite.rect.h:65/94,height=Math.min(94,96/ratio),width=height*ratio;
-    drawSprite(c,art,sprite?.id||'kelp',x+92-cam.x-width/2,bed+2-height,width,height);
-  }}
+    drawSprite(c,art,sprite?.id||'kelp',x+92-cam.x-width/2,bed+8-height,width,height);
+  }
+  // Camera limits keep the seabed lower edge at the viewport bottom.
+  for(let x=Math.floor(cam.x/240)*240;x<cam.x+W+240;x+=240)
+    drawSprite(c,art,'seabed',x-cam.x,bed-28,252,74);
   // Draw a continuous surface behind the terrain. Low receiving ramps start
   // underwater, so cutting the waves at the ramp's x1 leaves a visible seam.
   for(const region of regions){const surfaceY=region.waterY-cam.y;

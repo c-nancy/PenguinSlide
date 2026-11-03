@@ -4,7 +4,7 @@ function normalize(value,count,version=4){
   if(!value||value.version!==version)return initial(version);
   const bounded=n=>Number.isInteger(n)?Math.max(0,Math.min(count-1,n)):0;
   const unlocked=bounded(value.unlocked);
-  return {version,current:Math.min(bounded(value.current),unlocked),unlocked,
+  return {version,...(value.reefSplit?{reefSplit:true}:{}),current:Math.min(bounded(value.current),unlocked),unlocked,
     completed:[...new Set((Array.isArray(value.completed)?value.completed:[]).filter(n=>Number.isInteger(n)&&n>=0&&n<count&&n<=unlocked))].sort((a,b)=>a-b),
     seenStory:[...new Set((Array.isArray(value.seenStory)?value.seenStory:[]).filter(id=>typeof id==='string'))]};
 }
@@ -27,6 +27,10 @@ export function loadProgress(storage,count=6){
         completed:old.completed.filter(n=>n<2),
         seenStory:old.seenStory.filter(id=>!id.startsWith('chapter-'))};
     }
+    if(count>=14&&value?.version===4&&!value.reefSplit){
+      const shift=n=>n>=12?n+1:n;
+      value={...value,reefSplit:true,current:shift(value.current),unlocked:shift(value.unlocked),completed:(value.completed||[]).map(shift)};
+    }
     if(count>=5&&value?.version===4&&value.completed?.includes(3)&&value.unlocked===3)value={...value,unlocked:4};
     if(count>=13&&value?.version===4&&value.completed?.includes(11)&&value.unlocked===11)value={...value,unlocked:12};
     if(count>=12&&value?.version===4&&value.completed?.includes(10)&&value.unlocked===10)value={...value,unlocked:11};
@@ -36,7 +40,8 @@ export function loadProgress(storage,count=6){
     if(count>=8&&value?.version===4&&value.completed?.includes(6)&&value.unlocked===6)value={...value,unlocked:7};
     if(count>=7&&value?.version===4&&value.completed?.includes(5)&&value.unlocked===5)value={...value,unlocked:6};
     if(count>=6&&value?.version===4&&value.completed?.includes(4)&&value.unlocked===4)value={...value,unlocked:5};
-    return normalize(value,count);
+    const normalized=normalize(value,count);
+    return count>=14?{...normalized,reefSplit:true}:normalized;
   }catch{return initial();}
 }
 export function saveProgress(storage,progress){try{if(!storage)return false;storage.setItem(PROGRESS_KEY,JSON.stringify(progress));return true;}catch{return false;}}

@@ -1,5 +1,6 @@
 import {surfaceAt} from './level.js';
 import {reefBlock} from './reefs.js';
+import {placeBirds} from './bird-perches.js';
 
 const block=(x1,x2,y1,y2=y1,kind='shore',bottom=1280)=>({x1,x2,y1,y2,bottom,kind});
 function chapter(number,title,theme,solids,waters,checkpointXs,goalX,story,extra={}){
@@ -204,6 +205,29 @@ STORY_LEVELS.push(chapter(11,'冰洞暗礁','cave',[
  block(10300,10600,395,330,'ramp'),block(10600,11100,330,330,'finish')
 ],[[750,2700],[3300,6500],[7100,10300]],[2940,6800],10850,
  {entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:10880,y:330,kind:'lighthouse'}}));
+// The original cave becomes the longer second chapter; keep both routes explicit.
+const reefSequel=STORY_LEVELS.at(-1);
+reefSequel.id='chapter-12';reefSequel.chapter=12;reefSequel.title='冰洞暗礁·2';
+reefSequel.solids.at(-1).kind='checkpoint';
+reefSequel.checkpoints.forEach((cp,i)=>cp.id=`chapter-12-flag-${i+1}`);
+reefSequel.checkpoints.push({id:'chapter-12-flag-3',x:10680,y:308,label:'企鹅巢 C'});
+reefSequel.solids.push(caveRoof(11300,12150,470),reefBlock(11600,500,'ice-block-01'),
+ caveRoof(12150,12500,760),reefBlock(12180,550,'ice-block-02'),
+ caveRoof(12500,13500,430),reefBlock(12700,220,'ice-block-03'),
+ block(13900,14200,395,330,'ramp'),block(14200,14700,330,330,'finish'));
+reefSequel.waters.push([11100,13900]);reefSequel.width=14700;reefSequel.goalX=14450;
+reefSequel.goal={x:14480,y:330,kind:'lighthouse'};
+const reefIntro=chapter(11,'冰洞暗礁','cave',[
+ block(-100,500,330),block(500,750,330,395,'ramp'),
+ caveRoof(900,1800,500),reefBlock(1200,350,'ice-block-01'),reefBlock(1800,360,'reef-01'),
+ block(2200,2400,395,350,'ramp'),block(2400,2700,350,350,'checkpoint'),block(2700,2800,350,395,'ramp'),
+ caveRoof(3000,3800,650),reefBlock(3200,550,'ice-block-02'),
+ block(4400,4600,395,350,'ramp'),block(4600,4900,350,350,'checkpoint'),block(4900,5000,350,395,'ramp'),
+ caveRoof(5300,6000,470),reefBlock(5450,200,'ice-block-03'),reefBlock(6100,350,'reef-03'),
+ block(6700,6900,395,330,'ramp'),block(6900,7400,330,330,'finish')
+],[[750,2200],[2800,4400],[5000,6700]],[2480,4680],7150,
+ {entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:7180,y:330,kind:'shore'}});
+STORY_LEVELS.splice(10,0,reefIntro);
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -218,13 +242,11 @@ const birdPerches=[
   [[300,'petrel',25],[9500,'albatross',34]],
   [[300,'petrel',25],[8900,'albatross',34]],
   [[250,'petrel',25],[7200,'albatross',34]],
-  [[250,'petrel',25],[10700,'albatross',34]]
+  [[250,'petrel',25],[7300,'albatross',34]],
+  [[250,'petrel',25],[14500,'albatross',34]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
-  level.birds=(birdPerches[index]||[[250,'petrel',25],[7200,'albatross',34]]).map(([x,species,height])=>{
-    const ground=level.solids.find(s=>x>=s.x1&&x<=s.x2);
-    return {x,y:surfaceAt(ground,x),species,height};
-  });
+  level.birds=placeBirds(level,birdPerches[index]||[[250,'petrel'],[7200,'albatross']]);
 });
 
 // Fixed selection keeps visual silhouettes and alpha collision in agreement.
