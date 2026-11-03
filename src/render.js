@@ -1,4 +1,5 @@
-import {clipIceBottom,drawIceBottom} from './bottom-edge.js';
+import {clipIceBottom,drawIceBottom,drawCaveRoof} from './bottom-edge.js';
+import {fishDrift} from './fish-motion.js';
 import {drawReef} from './reefs.js';
 import {drawBreakableWalls} from './ice-gates.js';
 import {drawThin} from './thin-ice.js';
@@ -48,6 +49,9 @@ function terrain(c,art,s,cam,solids){
     drawWallPencilEdges(c,art,{...s,y1:s.y1-SNOW_CAP.wallStart,y2:s.y2-SNOW_CAP.wallStart},solids,cam);return;
   }
   if(s.thin&&s.phase!=='intact')return;
+  if(s.caveRoof&&drawCaveRoof(c,art,s,cam)){
+    c.save();clipIceBottom(c,s,cam);drawWallCracks(c,art,s,cam);c.restore();return;
+  }
   const t=surfaceTransform(s,cam),height=s.bottom-Math.min(s.y1,s.y2);
   if(s.kind==='floe'||s.kind==='tunnel'){
     // These sprites already contain their own irregular ice silhouette.
@@ -185,7 +189,7 @@ export function render(c,state,level){
     const underwaterWidth=Math.max(1580,W+Math.max(0,level.width-1160)*.045+16);
     c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),underwaterX,waterBackground.underwaterY,underwaterWidth,waterBackground.underwaterHeight);
     c.globalAlpha=.45;
-    for(let i=0;i<12;i++){const x=i*370+110-cam.x+Math.sin(time*.4+i)*16,y=(level.source||level).waterY+150+(i*83%400)-cam.y;if(x>-150&&x<W+100){
+    for(let i=0;i<12;i++){const bx=i*370+110,by=(level.source||level).waterY+150+(i*83%400),drift=fishDrift(bx,by,time,i),x=bx-cam.x+drift.x,y=by-cam.y+drift.y;if(x>-150&&x<W+100){
       const id=['fish','fish-school-02','fish-school-03'][i%3],sprite=art.sprites.get(id)||art.sprites.get('fish');
       const height=sprite?.rect?76*sprite.rect.h/sprite.rect.w:42;
       drawSprite(c,art,sprite?.id||'fish',x,y,76,height);

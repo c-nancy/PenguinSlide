@@ -1,5 +1,6 @@
 import {waterCurrentAt} from './currents.js';
 import {drawSprite} from './art.js';
+import {fishDrift} from './fish-motion.js';
 const mod=(value,range)=>(value%range+range)%range;
 
 export function drawCurrents(c,art,level,cam,time){
@@ -23,7 +24,8 @@ export function drawCurrents(c,art,level,cam,time){
       const t=mod(time*path.speed/length+i*.43,1),x=path.x1+(path.x2-path.x1)*t,y=path.y1+(path.y2-path.y1)*t;
       if(x<cam.x-100||x>cam.x+1380)continue;
       c.globalAlpha=.48*Math.min(1,t*8,(1-t)*8);
-      drawSprite(c,art,'fish-school-02',x-cam.x-32,y-cam.y-12,64,26);
+      const drift=fishDrift(path.x1,path.y1,time,i);
+      drawSprite(c,art,'fish-school-02',x-cam.x-32+drift.x,y-cam.y-12+drift.y,64,26);
     }
   }
   c.restore();

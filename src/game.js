@@ -315,6 +315,6 @@ function frame(timestamp){
   while(accumulator>=1/120){update(1/120);accumulator-=1/120;}
   ctx.setTransform(canvas.width/1280,0,0,canvas.height/720,0,0);ctx.clearRect(0,0,1280,720);ctx.save();
   if(state.shake>0&&!reducedMotion.matches&&state.mode==='playing')ctx.translate(Math.sin(state.time*77)*state.shake*12,Math.cos(state.time*63)*state.shake*8);
-  render(ctx,state,movingWorld(p,level));ctx.restore();updateHUD();requestAnimationFrame(frame);
+  if(state.mode!=='menu')render(ctx,state,movingWorld(p,level));ctx.restore();updateHUD();requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

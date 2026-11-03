@@ -1,5 +1,5 @@
-import {releaseImageURL} from './release-images.js';
-import {BOTTOM_EDGE_URLS} from './bottom-edge.js';
+import {releaseImageURL,releaseImageSource} from './release-images.js';
+import {BOTTOM_EDGE_URLS,CORNER_URLS} from './bottom-edge.js';
 import {REEF_URLS} from './reefs.js';
 import {THIN_URLS} from './thin-ice.js';
 import {WALL_BREAK_URLS} from './ice-gates.js';
@@ -38,15 +38,30 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const [environment,character,campaign,stones,floes,items,stoneAnimations,birds]=await Promise.all([json(ENV+'manifest.json'),json(CHARACTER+'manifest.json'),json(CAMPAIGN+'manifest.json'),json(STONES+'manifest.json'),json(FLOES+'manifest.json'),json(ITEMS+'manifest.json'),json(STONE_ANIMATIONS+'manifest.json'),json(BIRDS+'manifest.json')]);
   const images=new Map();
   const files=[...items.sprites.map(item=>ITEMS+item.file),...floes.sprites.map(item=>FLOES+item.file),...stones.sprites.map(item=>STONES+item.file),...environment.backgrounds.map(item=>new URL(item.file,ENV).href),...environment.sprites.map(item=>new URL(item.file,ENV).href),...campaign.backgrounds.map(item=>CAMPAIGN+item.file),...campaign.sprites.map(item=>CAMPAIGN+item.file),...Object.values(character.animations).map(clip=>CHARACTER+clip.spritesheet)];
-  files.push(...BOTTOM_EDGE_URLS,...REEF_URLS,...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
+  files.push(...CORNER_URLS,...BOTTOM_EDGE_URLS,...REEF_URLS,...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
   const loadImage=createImageQueue(url=>new Promise((resolve,reject)=>{
-    const image=new Image();image.onload=()=>{images.set(url,image);resolve();};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
+    const image=new Image();image.onload=()=>{try{images.set(url,releaseImageSource(url,image));resolve();}catch(error){reject(error);}};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
   }),3);
   const backgroundMap=new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]);
-  const optional=[...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
-  const common=[...environment.sprites.map(s=>new URL(s.file,ENV).href),...floes.sprites.map(s=>FLOES+s.file),...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS];
+  const optional=[...environment.sprites.map(s=>({...s,url:new URL(s.file,ENV).href})),...floes.sprites.map(s=>({...s,url:FLOES+s.file})),...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
+  const common=[...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS];
+  const sprites=new Map([...items.sprites.map(item=>[item.id,{...item,url:ITEMS+item.file}]),...floes.sprites.map(item=>[item.id,{...item,url:FLOES+item.file}]),...stones.sprites.map(item=>[item.id,{...item,url:STONES+item.file}]),...environment.sprites.map(item=>[item.id,{...item,url:new URL(item.file,ENV).href}]),...campaign.sprites.map(item=>[item.id,{...item,url:CAMPAIGN+item.file}])]);
+  for(const item of stoneAnimations.sprites)sprites.set(item.id,{...item,url:STONE_ANIMATIONS+item.file});
+  for(const item of birds.sprites)sprites.set(item.id,{...item,url:BIRDS+item.file});
+  sprites.set('ice-floe',{...sprites.get('floe-original-pointed'),id:'ice-floe'});
+  sprites.set('ice-slab',{...sprites.get('floe-original-flat'),id:'ice-slab'});
+  const art={environment,character,campaign,images,ENV,CHARACTER,CAMPAIGN,sprites,
+    backgrounds:backgroundMap,wallTexture:null,snowCapTexture:null,pencilEdgeTexture:null,snowEndCap:null,slabParts:null};
+  const prepareLoadedFloes=()=>{
+    for(const id of ['ice-floe','ice-slab',...floes.sprites.map(item=>item.id)]){
+      const sprite=sprites.get(id),image=sprite&&images.get(sprite.url);
+      if(image&&!sprite.topRows)sprite.topRows=floatingIceProfile(image,sprite.rect);
+    }
+    const slab=sprites.get('ice-slab'),image=slab&&images.get(slab.url);
+    if(image&&!art.slabParts)art.slabParts=createSlabParts(image,slab);
+  };
   const ensureLevel=async(level,background=false,report=()=>{})=>{
-    if(!level){await Promise.all([...new Set(files)].map(url=>loadImage(url,background)));return;}
+    if(!level){await Promise.all([...new Set(files)].map(url=>loadImage(url,background)));prepareLoadedFloes();return;}
     const ids=chapterSpriteIds(level),themes=[level.theme||'coast','underwater'];
     if(level.openSeaFrom!==undefined)themes.push('home');
     const needed=[...common,...themes.map(t=>backgroundMap.get(t)).filter(Boolean),...optional.filter(s=>ids.has(s.id)).map(s=>s.url)];
@@ -54,10 +69,11 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
     if(level.seals?.length)needed.push(...SEAL_URLS);
     if(level.gates?.length)needed.push(...WALL_BREAK_URLS);
     if(level.solids?.some(s=>s.kind==='reef'))needed.push(...REEF_URLS);
-    if(level.solids?.some(s=>s.kind==='tunnel'))needed.push(...BOTTOM_EDGE_URLS);
+    if(level.solids?.some(s=>s.kind==='tunnel'))needed.push(...BOTTOM_EDGE_URLS,...(level.solids.some(s=>s.caveRoof)?CORNER_URLS:[]));
     if(level.tutorial)needed.push(TUTORIAL_KEYS_URL);
     const urls=[...new Set(needed)];let completed=0;report(0,urls.length);
     await Promise.all(urls.map(url=>loadImage(url,background).then(()=>report(++completed,urls.length))));
+    prepareLoadedFloes();
   };
   await ensureLevel(initialLevel,false,onProgress);
   const wall=environment.sprites.find(item=>item.id==='ice-wall-repeat');
@@ -68,17 +84,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const pencilEdgeTexture=edge?createPencilEdgeTexture(images.get(new URL(edge.file,ENV).href),edge.rect):null;
   const end=environment.sprites.find(item=>item.id==='snow-cap-end');
   const snowEndCap=end?{image:images.get(new URL(end.file,ENV).href),rect:end.rect}:null;
-  const sprites=new Map([...items.sprites.map(item=>[item.id,{...item,url:ITEMS+item.file}]),...floes.sprites.map(item=>[item.id,{...item,url:FLOES+item.file}]),...stones.sprites.map(item=>[item.id,{...item,url:STONES+item.file}]),...environment.sprites.map(item=>[item.id,{...item,url:new URL(item.file,ENV).href}]),...campaign.sprites.map(item=>[item.id,{...item,url:CAMPAIGN+item.file}])]);
-  for(const item of stoneAnimations.sprites)sprites.set(item.id,{...item,url:STONE_ANIMATIONS+item.file});
-  for(const item of birds.sprites)sprites.set(item.id,{...item,url:BIRDS+item.file});
-  sprites.set('ice-floe',{...sprites.get('floe-original-pointed'),id:'ice-floe'});
-  sprites.set('ice-slab',{...sprites.get('floe-original-flat'),id:'ice-slab'});
-  for(const id of ['ice-floe','ice-slab',...floes.sprites.map(item=>item.id)]){
-    const sprite=sprites.get(id);if(sprite)sprite.topRows=floatingIceProfile(images.get(sprite.url),sprite.rect);
-  }
-  const slab=sprites.get('ice-slab'),slabParts=slab?createSlabParts(images.get(slab.url),slab):null;
-  return {environment,character,campaign,images,ENV,CHARACTER,CAMPAIGN,ensureLevel,wallTexture,snowCapTexture,pencilEdgeTexture,snowEndCap,slabParts,
-    backgrounds:new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]),
-    sprites};
+  Object.assign(art,{ensureLevel,wallTexture,snowCapTexture,pencilEdgeTexture,snowEndCap});
+  return art;
 }
 export function drawSprite(c,art,id,x,y,w,h){const sprite=art.sprites.get(id);if(!sprite)return;const r=sprite.rect;c.drawImage(art.images.get(sprite.url||art.ENV+sprite.file),r.x,r.y,r.w,r.h,x,y,w,h);}
