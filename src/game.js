@@ -80,15 +80,16 @@ function dialog(kind){
   const titles={dead:'歇一歇，再出发。',finished:'旅程暂歇，大海仍在前方。',paused:'歇一会儿',chapters:'沿着海湾，一站一站', 'chapter-complete':`${level.title} · 已走过`};
   $('dialog-kicker').textContent=kind==='paused'?`${chapter+1}/${LEVELS.length}`:['chapter-complete','finished','dead'].includes(kind)?`${chapter+1}/${LEVELS.length}·${level.title}`:kind==='chapters'?'先熟悉脚下，再走向海湾':`第 ${chapter+1} 站 / ${LEVELS.length} · ${level.title}`;
   $('dialog-title').textContent=titles[kind];
+  const retryPoint=p.checkpoint&&level.checkpoints?.[p.checkpointIndex]?'最近激活的巢':'本章起点';
   const texts={
-    dead:'生命值已耗尽。这次从本章起点重新出发。',
+    dead:`生命值已耗尽。从${retryPoint}重新出发。`,
     finished:`${level.story.exit}\n这段旅程暂时走到这里，更远的海，留给下一次出发。`,
     paused:'冰海会在这里等你。',
     chapters:'海湾的路，一站一站留在这里。',
     'chapter-complete':`${level.story.exit}\n${level.story.transition||''}`
   };
   $('dialog-text').textContent=texts[kind];
-  const labels={dead:'从本章起点重试',finished:'重玩整段旅程',paused:'继续冒险',chapters:'返回','chapter-complete':'继续前行'};
+  const labels={dead:`从${retryPoint}重试`,finished:'重玩整段旅程',paused:'继续冒险',chapters:'返回','chapter-complete':'继续前行'};
   $('resume').textContent=kind==='paused'?'Resume':kind==='chapter-complete'?'Continue':kind==='finished'?'重玩整段旅程':kind==='chapters'?'返回':labels[kind]+' →';
   $('restart').hidden=!started||kind!=='paused';
   $('replay').hidden=!started||!['dead','paused'].includes(kind);
@@ -160,7 +161,7 @@ $('resume').onclick=()=>{
   if(failedChapter!==null){enterChapter(failedChapter);return;}
   music.unlock();
   waterSound.unlock();bubbleSound.unlock();
-  if(state.mode==='dead')enterChapter(chapter);
+  if(state.mode==='dead')retry();
   else if(state.mode==='chapter-complete')enterChapter(chapter+1);
   else if(state.mode==='finished')enterChapter(0);
   else if(state.mode==='chapters')restore(chaptersReturn);

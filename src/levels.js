@@ -1,6 +1,10 @@
 import {surfaceAt} from './level.js';
 import {reefBlock} from './reefs.js';
 import {placeBirds} from './bird-perches.js';
+import {balanceEarlyLevels} from './level-balance-early.js';
+import {balanceWaterLevels} from './level-balance-water.js';
+import {balanceThinLevels} from './level-balance-thin.js';
+import {balanceReefLevels} from './level-balance-reefs.js';
 
 const block=(x1,x2,y1,y2=y1,kind='shore',bottom=1280)=>({x1,x2,y1,y2,bottom,kind});
 function chapter(number,title,theme,solids,waters,checkpointXs,goalX,story,extra={}){
@@ -228,6 +232,29 @@ const reefIntro=chapter(11,'冰洞暗礁','cave',[
 ],[[750,2200],[2800,4400],[5000,6700]],[2480,4680],7150,
  {entry:'',mid:'',exit:'',transition:''},{bottom:1040,goal:{x:7180,y:330,kind:'shore'}});
 STORY_LEVELS.splice(10,0,reefIntro);
+STORY_LEVELS.at(-1).goal.kind='shore';
+STORY_LEVELS.push(chapter(13,'跃入冰隙','cave',[
+ block(-100,650,330),
+ caveRoof(1500,2100,200),block(1500,1580,390,370,'ramp'),block(1580,2100,370),
+ caveRoof(3700,4450,160),block(3700,4450,280,280,'checkpoint'),
+ caveRoof(5900,6600,60),block(5900,6600,310),
+ caveRoof(8200,9100,150),block(8200,9100,270,270,'checkpoint'),block(9100,9400,270),
+ caveRoof(10800,11400,40),block(10800,11400,290),
+ caveRoof(12800,13600,130),block(12800,13600,250),block(13600,14500,250,250,'finish')
+],[[650,1500],[2100,3700],[4450,5900],[6600,8200],[9400,10800],[11400,12800]],[4170,8750],14250,
+ {entry:'',mid:'',exit:'',transition:''},{bottom:1040,
+ openings:[{left:1500,right:2100,floor:370},{left:3700,right:4450,floor:280},{left:5900,right:6600,floor:310},{left:8200,right:9100,floor:270},{left:10800,right:11400,floor:290},{left:12800,right:13600,floor:250}],
+ goal:{x:14280,y:250,kind:'lighthouse'}}));
+// Assign existing silhouettes before adding new floes. Later chapters retain
+// their original artwork even when another chapter gains a receiving platform.
+const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
+let floeIndex=0;
+for(const level of [TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS])for(const solid of level.solids)
+ if(solid.kind==='floe'&&!solid.floeVariant)solid.floeVariant=floeVariants[floeIndex++%floeVariants.length];
+balanceEarlyLevels(STORY_LEVELS);
+balanceWaterLevels(STORY_LEVELS);
+balanceThinLevels(STORY_LEVELS);
+balanceReefLevels(STORY_LEVELS);
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.
@@ -243,14 +270,11 @@ const birdPerches=[
   [[300,'petrel',25],[8900,'albatross',34]],
   [[250,'petrel',25],[7200,'albatross',34]],
   [[250,'petrel',25],[7300,'albatross',34]],
-  [[250,'petrel',25],[14500,'albatross',34]]
+  [[250,'petrel',25],[14500,'albatross',34]],
+  [[250,'skua',46]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
   level.birds=placeBirds(level,birdPerches[index]||[[250,'petrel'],[7200,'albatross']]);
 });
 
-// Fixed selection keeps visual silhouettes and alpha collision in agreement.
-const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
-let floeIndex=0;
-for(const level of LEVELS)for(const solid of level.solids)if(solid.kind==='floe'&&!solid.floeVariant)solid.floeVariant=floeVariants[floeIndex++%floeVariants.length];
 

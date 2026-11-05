@@ -40,6 +40,30 @@ export function exposedWallSpans(s,solids,side){
   return spans;
 }
 
+export function exposedBottomSpans(s,solids){
+  let spans=[{start:s.x1,end:s.x2}];
+  for(const other of solids){
+    // Irregular sprite bounds cannot hide an outline through transparency.
+    if(other===s||other.kind==='reef'||other.kind==='floe'||other.bottom<=s.bottom)continue;
+    let a=Math.max(s.x1,other.x1),b=Math.min(s.x2,other.x2);
+    if(b<=a)continue;
+    const ya=surfaceAt(other,a)-s.bottom,yb=surfaceAt(other,b)-s.bottom;
+    if(ya>0&&yb>0)continue;
+    if(ya>0||yb>0){
+      const crossing=a+(b-a)*(-ya)/(yb-ya);
+      if(ya>0)a=crossing;else b=crossing;
+    }
+    spans=spans.flatMap(span=>{
+      if(b<=span.start||a>=span.end)return [span];
+      const rest=[];
+      if(a>span.start)rest.push({start:span.start,end:a});
+      if(b<span.end)rest.push({start:b,end:span.end});
+      return rest;
+    });
+  }
+  return spans;
+}
+
 export function drawWallPencilEdges(c,art,s,solids,cam){
   const line=art.pencilEdgeTexture;if(!line)return;
   const width=6,repeat=320;
@@ -55,5 +79,16 @@ export function drawWallPencilEdges(c,art,s,solids,cam){
         c.drawImage(line,0,0,line.width,line.height,x-width/2,y-cam.y,width,repeat+.5);
       c.restore();
     }
+  }
+  const bottom=s.bottom-cam.y;
+  if(bottom< -width||bottom>720+width)return;
+  for(const span of exposedBottomSpans(s,solids)){
+    if(span.end<cam.x||span.start>cam.x+1280)continue;
+    c.save();c.beginPath();c.rect(span.start-cam.x,bottom-width/2,span.end-span.start,width);c.clip();
+    c.translate(s.x1-cam.x,bottom);c.rotate(-Math.PI/2);
+    const first=s.x1+Math.floor((Math.max(span.start,cam.x)-s.x1)/repeat)*repeat;
+    for(let x=first;x<Math.min(span.end,cam.x+1280);x+=repeat)
+      c.drawImage(line,0,0,line.width,line.height,-width/2,x-s.x1,width,repeat+.5);
+    c.restore();
   }
 }
