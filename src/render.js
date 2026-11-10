@@ -164,7 +164,7 @@ function scenery(c,art,level,cam,sy){
   };
   const theme=level.theme||'coast';
   backdrop(theme,1-seaBlend);backdrop('home',seaBlend);
-  if(theme==='ridge'||theme==='home'||seaBlend>0){
+  if(level.goal?.kind==='lighthouse'&&(theme==='ridge'||theme==='home'||seaBlend>0)){
     const home=theme==='home'||seaBlend>0;
     const size=home?60:36,x=1040-cam.x*.025,y=sy+2;
     c.save();c.globalAlpha=home?.64*(seaBlend||1):.42;

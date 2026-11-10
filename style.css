@@ -14,6 +14,11 @@
 .chapter .health-box.low{background:transparent}
 .health-box.low .fish-fill{filter:sepia(1) saturate(2.5) hue-rotate(310deg)}
 .icon-button:disabled{opacity:.4;cursor:default}
+#music{display:inline-grid;place-items:center;padding:0}
+.music-icon{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.music-icon ellipse{fill:currentColor;stroke:none}
+.music-icon .music-mute-mark{stroke-width:2.3}
+#music[aria-pressed="true"] .music-mute-mark{display:none}
 @media(max-width:550px){.health-fish-track{gap:3px}.game-top{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){.health-fish .fish-fill{transition:none}}
 .underwater .chapter strong,.underwater .route{color:#40483d}.underwater .eyebrow{color:#6d7565}.underwater .route-track{background:#59614b33}.underwater .route-track>i{background:#807b58}
@@ -51,7 +56,7 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 @media(max-width:550px){.chapter{padding:6px 8px}.chapter .health-box{width:118px}.movement{padding:6px 8px;gap:8px}.game-frame[data-mode=finished] .overlay.modal{justify-content:center;padding-left:0}.game-frame[data-mode=finished] .dialog{width:94%;max-width:94%;padding:18px 20px}.game-frame[data-mode=finished] .dialog h2{font-size:19px}.game-frame[data-mode=finished] .dialog p{font-size:11px}}
 
 /* Observational pencil cloud masses carry text in their bright inner volume. */
-:root{--cloud-art:url('./assets/optimized/1e50e2473223954476ffc3ff8ad8542ada766e0d8ac48577958a9dae50b01773.webp');--cloud-toast:url('./assets/optimized/c9db2d8340f54d9a8c9d391026e9d10e1f5cec760a37910e8c9609ab7a9fecea.webp')}
+:root{--cloud-art:var(--cloud-toast);--cloud-toast:url('./assets/optimized/c9db2d8340f54d9a8c9d391026e9d10e1f5cec760a37910e8c9609ab7a9fecea.webp')}
 .dialog,.game-frame[data-mode=finished] .dialog{
   --cloud-rim:36px;border:var(--cloud-rim) solid transparent;
   border-image:none;background:var(--cloud-art) center / 100% 100% no-repeat border-box;

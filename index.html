@@ -13,7 +13,18 @@
   <main class="shell">
     <header class="topbar">
       <a class="brand" href="./" aria-label="去远方首页"><span class="brand-icon">❄</span><span>去远方<small>TO DISTANT SHORES</small></span></a>
-      <nav aria-label="游戏工具"><button id="chapters" class="text-button">章节</button><button id="music" class="icon-button" aria-label="关闭背景音乐" aria-pressed="true" title="关闭背景音乐">♫</button><button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button></nav>
+      <nav aria-label="游戏工具">
+        <button id="chapters" class="text-button">章节</button>
+        <button id="music" class="icon-button" aria-label="关闭背景音乐" aria-pressed="true" title="关闭背景音乐">
+          <svg class="music-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 18V6l11-2v12"/>
+            <ellipse cx="6" cy="18" rx="3" ry="2.25" transform="rotate(-18 6 18)"/>
+            <ellipse cx="17" cy="16" rx="3" ry="2.25" transform="rotate(-18 17 16)"/>
+            <path class="music-mute-mark" d="M4 3l17 18"/>
+          </svg>
+        </button>
+        <button id="pause" class="icon-button" aria-label="暂停游戏" title="暂停 / 继续">Ⅱ</button>
+      </nav>
     </header>
 
     <section class="game-frame" data-mode="menu" aria-label="企鹅横版闯关游戏">

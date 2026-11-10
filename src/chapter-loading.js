@@ -16,7 +16,7 @@ export function chapterSpriteIds(level){
  }
  if(level.decorations?.some(d=>['rocks','cairn'].includes(d.kind)))for(const name of ['original-cairn','original-rocks','low','staggered','twin'])ids.add('stones-'+name);
  if(level.checkpoints?.length){ids.add('checkpoint');ids.add('checkpoint-family-standing');ids.add('checkpoint-family-greeting');}
- if(['ridge','home'].includes(level.theme)||level.openSeaFrom!==undefined||level.goal?.kind==='lighthouse')ids.add('home-lighthouse');
+ if(level.goal?.kind==='lighthouse')ids.add('home-lighthouse');
  if(level.goal?.kind==='beacon')ids.add('lighthouse');
  if(['shore','cave-exit'].includes(level.goal?.kind))ids.add('finish-flag');
  return ids;

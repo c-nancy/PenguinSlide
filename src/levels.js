@@ -263,6 +263,13 @@ balanceEarlyLevels(STORY_LEVELS);
 balanceWaterLevels(STORY_LEVELS);
 balanceThinLevels(STORY_LEVELS);
 balanceReefLevels(STORY_LEVELS);
+// The lighthouse marks the current end of development. Resolve old endpoint
+// definitions together after all chapters and geometry adjustments are built.
+for(const level of STORY_LEVELS){
+ if(!level.goal)continue;
+ if(level===STORY_LEVELS.at(-1))level.goal.kind='lighthouse';
+ else if(['lighthouse','beacon'].includes(level.goal.kind))level.goal.kind='shore';
+}
 export const LEVELS=[TUTORIAL,SECOND_TUTORIAL,...STORY_LEVELS];
 
 // Wildlife stays clear of nests and the cave interior.

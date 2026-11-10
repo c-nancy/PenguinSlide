@@ -31,7 +31,6 @@ const bubbleSound=createBubbleSound();bubbleSound.prepare();
 const waterSound=createWaterSound();
 waterSound.prepare();
 function updateMusicButton(){
-  $('music').textContent=music.enabled?'♫':'♪';
   $('music').setAttribute('aria-label',music.enabled?'关闭背景音乐':'开启背景音乐');
   $('music').setAttribute('aria-pressed',String(music.enabled));
   $('music').title=music.enabled?'关闭背景音乐':'开启背景音乐';
