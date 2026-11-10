@@ -80,6 +80,7 @@ export function drawWallPencilEdges(c,art,s,solids,cam){
       c.restore();
     }
   }
+  if(s.roughBottom)return; // Its sampled edge artwork supplies the bottom outline.
   const bottom=s.bottom-cam.y;
   if(bottom< -width||bottom>720+width)return;
   for(const span of exposedBottomSpans(s,solids)){

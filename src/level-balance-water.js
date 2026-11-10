@@ -28,9 +28,9 @@ export function balanceWaterLevels(levels){
 
  const high=levels[7];
  for(const floe of high.movingIce.slice(1))floe.period=10;
- add(high,ice('high-relay',4790,5050,235,410));
- add(high,ice('high-near',7440,7790,245,420));
- add(high,ice('high-far',7900,8400,310,470));
+ add(high,{...ice('high-relay',4790,5050,235,900),kind:'tunnel'});
+ add(high,{...ice('high-near',7440,7790,245,900),kind:'tunnel'});
+ add(high,{...ice('high-far',7900,8400,310,650),kind:'tunnel'});
 
  const tide=levels[8];
  add(tide,ice('tide-preparation',4370,4650,370,540));
@@ -41,5 +41,7 @@ export function balanceWaterLevels(levels){
 
  const gates=levels[9];
  Object.assign(gates.movingIce[0],{x1:3190,x2:3570});
- add(gates,ice('inlet-final-rest',5600,5960,350,520));
+ if(!gates.movingIce.some(s=>s.id==='inlet-final-rest'))gates.movingIce.push({
+  ...ice('inlet-final-rest',5600,5960,620,790),motion:'water',basin:2,freeboard:-30
+ });
 }

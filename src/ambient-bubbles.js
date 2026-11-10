@@ -3,6 +3,7 @@ import {CONFIG} from './physics.js';
 import {surfaceAt} from './level.js';
 import {hasShape,shapeOverlap} from './shape-collision.js';
 import {drawSprite} from './art.js';
+import {sealTouches} from './seals.js';
 
 const sizes=[{name:'small',radius:10},{name:'medium',radius:16},{name:'large',radius:23}];
 function randomFor(seed){let n=seed>>>0;return ()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};}
@@ -16,6 +17,12 @@ function clearOfIce(level,x,y,r,padding=5){
   return box.bottom>Math.min(surfaceAt(s,a),surfaceAt(s,b));
  });
 }
+function clearOfSealPatrol(level,x,y,r){
+ return !(level.seals||[]).some(s=>{
+  const patrolX=Math.max(s.left+95,Math.min(s.right-95,x));
+  return sealTouches({...s,x:patrolX},x,y,r+9);
+ });
+}
 export function createAmbientBubbles(level){
  const rand=randomFor(hash(String(level.id??'level'))),result=[];
  for(const [left,right] of level.waters||[]){
@@ -23,7 +30,7 @@ export function createAmbientBubbles(level){
   for(let x=left+65;x<right-35;x+=220){
    for(let attempt=0;attempt<5;attempt++){
     const spec=sizes[Math.floor(rand()*sizes.length)],bx=Math.min(right-spec.radius-8,x+rand()*90),by=level.waterY+60+rand()*Math.max(1,waterHeight-120);
-    if(bx-spec.radius<left||by+spec.radius>level.bottom-16||!clearOfIce(level,bx,by,spec.radius,9))continue;
+    if(bx-spec.radius<left||by+spec.radius>level.bottom-16||!clearOfIce(level,bx,by,spec.radius,9)||!clearOfSealPatrol(level,bx,by,spec.radius))continue;
     result.push({x:bx,y:by,radius:spec.radius,size:spec.name,phase:'idle'});break;
    }
   }

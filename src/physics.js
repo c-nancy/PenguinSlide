@@ -27,7 +27,7 @@ const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
 export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
   return {iceWorld:null,platformVX:0,x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
-    facing:1,event:null,waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
+    facing:1,event:null,waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,checkpointGates:null,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
     forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
 export function checkpointsFor(level){return level.checkpoints|| (level.checkpoint?[level.checkpoint]:[]);}
@@ -36,8 +36,9 @@ export function resetPlayer(p,level,fromStart=false) {
   const checkpoint=checkpointsFor(level)[index];
   const saved=!!(!fromStart&&p.checkpoint&&checkpoint&&(!p.levelId||!level.id||p.levelId===level.id));
   const at=saved?checkpoint:level.start;
+  const checkpointGates=saved&&p.checkpointGates?p.checkpointGates.map(g=>({...g})):null;
   Object.assign(p,createPlayer(at.x,at.y),{health:saved?HEALTH.max:clamp(level.initialHealth??HEALTH.max,1,HEALTH.max),
-    checkpoint:saved,checkpointIndex:saved?index:-1,levelId:level.id||null});
+    checkpoint:saved,checkpointIndex:saved?index:-1,checkpointGates,levelId:level.id||null});
 }
 function waterColumn(p,level) {
   return level.waters.some(([a,b])=>p.x>=a&&p.x<=b) &&
@@ -225,7 +226,10 @@ function stepCore(p,input,level,dt) {
   // from inside otherwise blocks both axes, including movement away from ice.
   const solidContains=(s,x,y)=>{
     if(hasShape(s))return shapeOverlap(s,{left:x-CONFIG.radius,right:x+CONFIG.radius,top:y-CONFIG.halfHeight,bottom:y+CONFIG.halfHeight});
-    if(x+CONFIG.radius<=s.x1||x-CONFIG.radius>=s.x2||y-CONFIG.halfHeight>=iceBottomAt(s,x))return false;
+    // Adding/subtracting the body height can round a resolved underside contact
+    // slightly inside the ice. Use the same tolerance as the top contact so the
+    // escape solver cannot mistake that rounding for a deep overlap.
+    if(x+CONFIG.radius<=s.x1||x-CONFIG.radius>=s.x2||y-CONFIG.halfHeight>=iceBottomAt(s,x)-1e-5)return false;
     return y+CONFIG.halfHeight>Math.min(surfaceAt(s,Math.max(s.x1,x-CONFIG.radius)),surfaceAt(s,Math.min(s.x2,x+CONFIG.radius)))+1e-5;
   };
   for(const s of level.solids){
@@ -400,6 +404,7 @@ function stepCore(p,input,level,dt) {
     // Passing above the nest counts too; travelling below it or underwater does not.
     if(index>previous&&!p.wet&&p.y<checkpoint.y+12&&p.x>checkpoint.x-(level.checkpointActivationBefore??100)&&p.x<checkpoint.x+120){
       p.checkpoint=true;p.checkpointIndex=index;p.health=HEALTH.max;p.event='checkpoint';
+      if(level.checkpointGateState)p.checkpointGates=level.gateActors.map(g=>({id:g.id,open:g.open,hits:g.hits,fill:g.fill}));
     }
   }
   if(p.x>level.goalX&&p.grounded){p.finished=true;p.event='finish';}

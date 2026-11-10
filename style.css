@@ -167,14 +167,67 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 .game-frame[data-mode=chapters] #resume{min-width:0;margin:0 auto;padding:5px 16px;background:transparent;border:0;border-radius:0;box-shadow:none;color:var(--graphite);font-size:12px;line-height:18px}
 .game-frame[data-mode=chapters] #resume:hover{background:transparent;transform:none;text-decoration:underline;text-underline-offset:4px}
 .game-frame[data-mode=chapters] .chapter-list{margin-bottom:2px}
-/* Keep the chapter list and its scrollbar inside the undistorted cloud. */
-.game-frame[data-mode=chapters] .dialog{height:min(92%,487px);width:auto;max-width:94%;aspect-ratio:1657/949;max-height:none;padding:6% 9% 3%;background-size:contain;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.game-frame[data-mode=chapters] #dialog-title{flex:none;margin:0 auto 8px}
-.game-frame[data-mode=chapters] .chapter-list{flex:1 1 auto;min-height:0;width:70%;max-width:400px;margin:0 auto;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#aaa598 transparent}
+/* Anchor every control to the cloud's own bright interior. */
+.game-frame[data-mode=chapters] .overlay{container-type:size}
+.game-frame[data-mode=chapters] .dialog{
+  position:relative;
+  width:min(850px,94cqw,160.63cqh);
+  height:auto;
+  min-width:0;
+  max-width:none;
+  max-height:none;
+  aspect-ratio:1657/949;
+  border:0;
+  padding:0;
+  overflow:hidden;
+  background-size:contain;
+  container-type:inline-size;
+}
+.game-frame[data-mode=chapters] #dialog-title{
+  position:absolute;
+  top:24%;
+  left:20%;
+  width:60%;
+  max-width:none;
+  margin:0;
+  font-size:clamp(11px,2.6cqw,23px);
+  line-height:1.4;
+  letter-spacing:1px;
+}
+.game-frame[data-mode=chapters] .chapter-list{
+  position:absolute;
+  top:34%;
+  bottom:18%;
+  left:25%;
+  width:50%;
+  max-width:none;
+  min-height:0;
+  margin:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#aaa598 transparent;
+  padding:4px 6px;
+}
 .game-frame[data-mode=chapters] .chapter-option{min-height:42px}
-.game-frame[data-mode=chapters] #resume{flex:none;margin:4px auto 0}
+.game-frame[data-mode=chapters] #resume{
+  position:absolute;
+  bottom:9%;
+  left:25%;
+  width:50%;
+  min-width:0;
+  margin:0;
+  padding:4px 0;
+}
 @media(max-width:850px){.game-frame[data-mode=chapters] .chapter-option{min-height:32px}}
-@media(max-width:550px){.game-frame[data-mode=chapters] .dialog{padding:6% 9% 3%}.game-frame[data-mode=chapters] .chapter-list{width:85%}.game-frame[data-mode=chapters] .chapter-option{min-height:26px}.game-frame[data-mode=chapters] #dialog-title{margin-bottom:4px}}
+@media(max-width:550px){
+  .game-frame[data-mode=chapters] .chapter-list{left:22%;width:56%;bottom:22%;padding:2px}
+  .game-frame[data-mode=chapters] .chapter-option{min-height:30px;gap:4px;grid-template-columns:20px minmax(0,1fr) auto}
+  .game-frame[data-mode=chapters] .chapter-option strong{font-size:10px}
+  .game-frame[data-mode=chapters] .chapter-option small{font-size:8px}
+  .game-frame[data-mode=chapters] #resume{font-size:10px;line-height:16px;padding:2px 0}
+}
 /* Preserve the original cloud proportions in the pause menu. */
 .game-frame[data-mode=paused] .dialog{width:min(680px,94%);aspect-ratio:1657/949;border:0;padding:60px 48px 40px;background-size:contain;display:flex;flex-direction:column;align-items:center;justify-content:center}
 @media(max-width:550px){.game-frame[data-mode=paused] .dialog{padding:38px 24px 24px}.game-frame[data-mode=paused] .dialog-actions{gap:4px 12px}.game-frame[data-mode=paused] .dialog-actions .dialog-restart{font-size:9px;padding:3px 0}}

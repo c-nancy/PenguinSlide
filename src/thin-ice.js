@@ -4,6 +4,12 @@ import {gateSolid} from './ice-gates.js';
 export const THIN_URLS=[new URL('../assets/terrain/floe-variants/thin-break-01.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-02.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-03.png',import.meta.url).href];
 export function advanceThin(world,p,dt){
  for(const s of world.thinActors||[]){
+  if(s.motion==='water'){
+   const riding=(s.phase==='intact'||s.phase==='cracking')&&p.grounded&&!p.wet&&p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-surfaceAt(s,p.x))<5;
+   const dy=(world.basinSurfaces?.[s.basin]?.waterY??world.source.waterY)+s.freeboard-s.y1;
+   s.y1+=dy;s.y2+=dy;s.bottom+=dy;
+   if(riding)p.y+=dy;
+  }
   if(s.phase==='cracking'){s.age+=dt;if(s.age>=1.5){s.phase='broken';s.age=0;if(p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-s.y1)<6)p.grounded=false;}}
   else if(s.phase==='broken'||s.phase==='restoring'){
    s.age+=dt;

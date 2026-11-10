@@ -1,13 +1,24 @@
 import {FLOE_VARIANT_MASKS} from './floe-variant-masks.js';
 import {FLOE_MASK} from './floe-mask-data.js';
 import {reefColumns} from './reefs.js';
+import {iceBottomAt} from './bottom-edge.js';
 
 const cache=new WeakMap(),cell=2;
 export const hasShape=s=>s.kind==='floe'||s.kind==='reef';
 function columnsFor(s){
   if(cache.has(s))return cache.get(s);
   if(s.kind==='reef'){const columns=reefColumns(s);cache.set(s,columns);return columns;}
-  const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,mask=FLOE_VARIANT_MASKS[s.floeVariant]||FLOE_MASK,columns=[];
+  const width=s.x2-s.x1,slope=(s.y2-s.y1)/width,columns=[];
+  // Moving composed walls have vertical sides, not the compact floe sprite's
+  // transparent corners. Sweep the same body that static wall collision uses.
+  if(s.kind==='tunnel'){
+    for(let x=0;x<width;x+=cell){
+      const center=Math.min(width,x+cell/2);
+      columns.push({left:s.x1+x,right:s.x1+Math.min(width,x+cell),runs:[[s.y1+slope*center,iceBottomAt(s,s.x1+center)]]});
+    }
+    cache.set(s,columns);return columns;
+  }
+  const mask=FLOE_VARIANT_MASKS[s.floeVariant]||FLOE_MASK;
   for(let x=0;x<width;x+=cell){
     const center=Math.min(width,x+cell/2),band=Math.floor(center/4)*4,step=Math.min(4,width-band),overlap=band+step<width?.35:0;
     const a=Math.floor(band/width*mask.width),b=Math.min(mask.width,Math.ceil((band+step+overlap)/width*mask.width));

@@ -5,6 +5,7 @@ import {balanceEarlyLevels} from './level-balance-early.js';
 import {balanceWaterLevels} from './level-balance-water.js';
 import {balanceThinLevels} from './level-balance-thin.js';
 import {balanceReefLevels} from './level-balance-reefs.js';
+import {RETURNING_TIDE_LEVEL} from './returning-tide-level.js';
 
 const block=(x1,x2,y1,y2=y1,kind='shore',bottom=1280)=>({x1,x2,y1,y2,bottom,kind});
 function chapter(number,title,theme,solids,waters,checkpointXs,goalX,story,extra={}){
@@ -164,7 +165,7 @@ STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-b').x1+=20;
 const furStep=STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-b');furStep.y1=furStep.y2=330;furStep.bottom=420;
 STORY_LEVELS[6].thinIce.find(s=>s.id==='fur-c').x1+=80;
 STORY_LEVELS[6].goal.kind='shore';
-const highIce=(id,x)=>({id,x1:x,x2:x+500,y1:260,y2:260,bottom:540,kind:'floe',floeVariant:'floe-original-flat',motion:'slow',amplitude:100,period:16});
+const highIce=(id,x)=>({id,x1:x,x2:x+500,y1:260,y2:260,bottom:900,kind:'tunnel',motion:'slow',amplitude:100,period:16});
 STORY_LEVELS.push(chapter(8,'高冰逐浪','bay',[
  block(-100,600,330),block(600,800,330,395,'ramp'),
  block(1850,2650,395,350,'ramp'),block(2650,3050,350,350,'checkpoint'),block(3050,3250,350,395,'ramp'),
@@ -236,15 +237,22 @@ STORY_LEVELS.at(-1).goal.kind='shore';
 STORY_LEVELS.push(chapter(13,'跃入冰隙','cave',[
  block(-100,650,330),
  caveRoof(1500,2100,200),block(1500,1580,390,370,'ramp'),block(1580,2100,370),
+ reefBlock(2320,440,'reef-01'),reefBlock(2940,400,'reef-03'),
  caveRoof(3700,4450,160),block(3700,4450,280,280,'checkpoint'),
+ reefBlock(4880,440,'reef-02'),
  caveRoof(5900,6600,60),block(5900,6600,310),
+ reefBlock(6820,440,'reef-01'),reefBlock(7490,400,'reef-02'),
  caveRoof(8200,9100,150),block(8200,9100,270,270,'checkpoint'),block(9100,9400,270),
+ reefBlock(9770,470,'reef-03'),
  caveRoof(10800,11400,40),block(10800,11400,290),
+ reefBlock(11550,380,'reef-01'),reefBlock(12080,300,'reef-02'),
  caveRoof(12800,13600,130),block(12800,13600,250),block(13600,14500,250,250,'finish')
 ],[[650,1500],[2100,3700],[4450,5900],[6600,8200],[9400,10800],[11400,12800]],[4170,8750],14250,
  {entry:'',mid:'',exit:'',transition:''},{bottom:1040,
  openings:[{left:1500,right:2100,floor:370},{left:3700,right:4450,floor:280},{left:5900,right:6600,floor:310},{left:8200,right:9100,floor:270},{left:10800,right:11400,floor:290},{left:12800,right:13600,floor:250}],
  goal:{x:14280,y:250,kind:'lighthouse'}}));
+STORY_LEVELS.find(level=>level.id==='chapter-13').goal.kind='shore';
+STORY_LEVELS.push(RETURNING_TIDE_LEVEL);
 // Assign existing silhouettes before adding new floes. Later chapters retain
 // their original artwork even when another chapter gains a receiving platform.
 const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
@@ -274,6 +282,7 @@ const birdPerches=[
   [[250,'skua',46]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
+  if(level.id==='chapter-14'){level.birds=[];return;}
   level.birds=placeBirds(level,birdPerches[index]||[[250,'petrel'],[7200,'albatross']]);
 });
 

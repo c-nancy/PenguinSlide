@@ -7,6 +7,7 @@ export const SEAL_URLS=[new URL('../assets/scenery/seals/leopard-seal.png',impor
  new URL('../assets/scenery/seals/animations/leopard-seal/dash.png',import.meta.url).href];
 export const createSeals=level=>(level.seals||[]).map(s=>({...s,homeY:s.y,vx:100,vy:0,mode:'patrol',inside:false,timer:0,facing:1}));
 const touches=(s,x,y,r=0)=>((x-s.x)/(95+r))**2+((y-s.y)/(30+r))**2<=1;
+export {touches as sealTouches};
 function sealBlocked(world,x,y){
  const box={left:x-90,right:x+90,top:y-27,bottom:y+27};
  return world.solids.some(o=>hasShape(o)?shapeOverlap(o,box):box.right>o.x1&&box.left<o.x2&&box.bottom>Math.min(o.y1,o.y2)&&box.top<o.bottom);

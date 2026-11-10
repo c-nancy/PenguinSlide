@@ -5,13 +5,18 @@ export function movingWorld(p,level){
  if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide&&!level.gates)return level;
  if(p.iceWorld?.source===level)return p.iceWorld;
  const actors=(level.movingIce||[]).map(def=>({...def,vx:0,delta:0,clock:0,active:false,pushOffset:0,pushVX:0,localShape:{...def}}));
- const thinActors=(level.thinIce||[]).map(s=>({...s,thin:true,phase:'intact',age:0,restore:0}));
- const gateActors=(level.gates||[]).map((g,i)=>{const cleared=p.checkpoint&&i<p.checkpointIndex;return {...g,shift:0,open:!!cleared,fill:cleared?1:0,hits:cleared?2:0};});
+ const thinActors=(level.thinIce||[]).map(s=>({...s,thin:true,phase:'intact',age:0,restore:0,...(s.motion==='water'?{localShape:{...s}}:{})}));
+ const gateActors=(level.gates||[]).map((g,i)=>{
+  const saved=level.checkpointGateState&&p.checkpoint?p.checkpointGates?.find(state=>state.id===g.id):null;
+  const cleared=p.checkpoint&&i<p.checkpointIndex;
+  return {...g,shift:0,open:saved?!!saved.open:!!cleared,fill:saved?saved.fill:cleared?1:0,hits:saved?saved.hits:cleared?2:0};
+ });
  const basinSurfaces=level.basins?.map(b=>({...b,waterY:b.initial-(b.feed===undefined?0:(b.initial-b.target)*gateActors[b.feed].fill)}));
- for(const s of actors)if(s.motion==='water'){
+ for(const s of [...actors,...thinActors])if(s.motion==='water'){
   const dy=basinSurfaces[s.basin].waterY+s.freeboard-s.y1;s.y1+=dy;s.y2+=dy;s.bottom+=dy;
  }
- p.iceWorld={...level,source:level,actors,thinActors,gateActors,basinSurfaces,solids:[...level.solids,...actors,...thinActors,...gateActors]};return p.iceWorld;
+ const waterY=basinSurfaces?.find(b=>p.x>=b.left&&p.x<=b.right)?.waterY??level.waterY;
+ p.iceWorld={...level,waterY,source:level,actors,thinActors,gateActors,basinSurfaces,solids:[...level.solids,...actors,...thinActors,...gateActors]};return p.iceWorld;
 }
 export function riddenIce(p,world){
  return p.grounded&&!p.wet?world.actors?.find(s=>p.x+17>s.x1&&p.x-17<s.x2&&Math.abs(p.y+22-surfaceAt(s,p.x))<5):null;

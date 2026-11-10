@@ -21,6 +21,11 @@ export function bottomEdge(s){
  return {...BOTTOM_EDGES[id],url};
 }
 export function iceBottomAt(s,x){
+ if(s.roughBottom){
+  const left=s.roughBottom.start??s.x1;if(x<=left)return s.bottom;
+  const t=Math.max(0,Math.min(1,(x-left)/(s.x2-left))),p=bottomEdge(s).profile;
+  return s.bottom+s.roughBottom.height*(sample(p,t)-(p[0]*(1-t)+p[256]*t));
+ }
  if(s.kind!=='tunnel')return s.bottom;
  if(s.caveRoof){
   const corner=cornerFor(s),base=s.bottom-20,dist=Math.min(x-s.x1,s.x2-x);
@@ -38,6 +43,15 @@ export function clipIceBottom(c,s,cam){
 }
 export function drawIceBottom(c,art,s,cam){
  const edge=bottomEdge(s),im=art.images.get(edge.url);if(!im)return;
+ if(s.roughBottom){
+  const left=s.roughBottom.start??s.x1,width=s.x2-left,height=s.roughBottom.height;
+  const [rx,ry,rw,rh]=edge.rect,p=edge.profile;
+  for(let x=0;x<width;x+=4){
+   const w=Math.min(4,width-x),t=(x+w/2)/width,y=s.bottom-height*(p[0]*(1-t)+p[256]*t)-cam.y;
+   c.drawImage(im,rx+x/width*rw,ry,w/width*rw,rh,left+x-cam.x,y,w+.3,height);
+  }
+  return;
+ }
  if(s.caveRoof){
   const corner=cornerFor(s),image=art.images.get(corner.url),base=s.bottom-20-cam.y;
   if(image)for(const side of [-1,1]){

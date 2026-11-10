@@ -39,7 +39,7 @@ function updateMusicButton(){
 $('music').onclick=()=>{music.toggle();updateMusicButton();};updateMusicButton();
 let progress=loadProgress(storage,LEVELS.length),chapter=progress.current,level=LEVELS[chapter];
 let p=createPlayer(level.start.x,level.start.y);
-const state={seals:createSeals(level),rings:[],p,cam:{x:p.x-410,y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(level),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
+const state={seals:createSeals(level),rings:[],p,cam:{x:p.x-410+(level.cameraLead||0),y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(movingWorld(p,level)),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const healingFeedback=createHealingFeedback(canvas,$('health-meter'),()=>reducedMotion.matches);
 const keys=new Set();
@@ -50,7 +50,7 @@ function persist(){saveProgress(storage,progress);}
 function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;music.setMode(mode);waterSound.setMode(mode);bubbleSound.setMode(mode);frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
 function focusGame(){canvas.focus({preventScroll:true});}
 function clearInput(){keys.clear();jumpQueued=false;accumulator=0;}
-function clearEffects(){state.seals=createSeals(level);state.rings=[];waterSound.reset();bubbleSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(level);state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
+function clearEffects(){state.seals=createSeals(level);state.rings=[];waterSound.reset();bubbleSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(movingWorld(p,level));state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
 function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=true;}
 function play(){
@@ -128,7 +128,7 @@ async function enterChapter(index){
     progress=selectChapter(progress,index,LEVELS.length);chapter=progress.current;level=LEVELS[chapter];persist();
     p=createPlayer(level.start.x,level.start.y);state.p=p;resetPlayer(p,level,true);resetPose(p);
     clearEffects();notices.clear();state.time=0;elapsed=0;
-    state.cam={x:Math.max(-120,Math.min(level.width-1160,p.x-410)),y:cameraY(level,p)};
+    state.cam={x:Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0))),y:cameraY(level,p)};
     setMode('transition');
     $('route-end').setAttribute('aria-label',chapter===LEVELS.length-1?'当前旅途暂止：灯塔':'终点旗子：下一站');
     if(!reducedMotion.matches)await curtain.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards',easing:'ease-in'}).finished;
@@ -145,7 +145,7 @@ async function enterChapter(index){
 function retry(){
   if(!started||transitioning||!['playing','paused','dead'].includes(state.mode))return;
   resetPlayer(p,level);resetPose(p);clearEffects();notices.clear();hideNotice();
-  state.cam.x=Math.max(-120,Math.min(level.width-1160,p.x-410));state.cam.y=cameraY(level,p);
+  state.cam.x=Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0)));state.cam.y=cameraY(level,p);
   play();
 }
 function finish(){
@@ -248,7 +248,7 @@ function update(dt){
   sealEffects(state.seals,state.rings,state.ambientBubbles,state.time);
   updateRings(state.rings,movingWorld(p,level),dt,state.ambientBubbles,state.time);
   updateAmbientBubbles(state.ambientBubbles,p,previous,state.time,movingWorld(p,level));
-  bubbleSound.update(state.ambientBubbles,state.rings);
+  bubbleSound.update(state.ambientBubbles,state.rings,state.cam);
   updateBirds(state.birds,p,dt,movingWorld(p,level));
   if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
   state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);
@@ -274,7 +274,7 @@ function update(dt){
   if(effectTick%6===0&&p.grounded&&Math.abs(p.vx)>80)state.particles.push({x:p.x-p.facing*15,y:p.y+20,vx:-p.vx*.25,vy:-20-Math.random()*30,life:.5,maxLife:.5,size:2,kind:'snow'});
   for(const a of state.particles){a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;if(a.kind!=='bubble')a.vy+=350*dt;}state.particles=state.particles.filter(a=>a.life>0);
   state.shake=Math.max(0,state.shake-dt);
-  const targetX=Math.max(-120,Math.min(level.width-1160,p.x-410+p.vx*.18));
+  const targetX=Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0)+p.vx*.18));
   const targetY=cameraY(level,p);
   const ease=1-Math.exp(-4*dt);state.cam.x+=(targetX-state.cam.x)*ease;state.cam.y+=(targetY-state.cam.y)*ease;
   state.cam.y=constrainCameraY(level,p,state.cam.y);

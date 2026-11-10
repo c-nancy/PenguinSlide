@@ -11,7 +11,7 @@ import {drawImpactEffects} from './impact-effects.js';
 import {CONFIG,remainingCharge} from './physics.js';
 import {surfaceAt} from './level.js';
 import {buoySurfaceY} from './tides.js';
-import {waterBackgroundFrame} from './water-background.js';
+import {waterBackgroundFrame,visibleWaterRegions} from './water-background.js';
 import {drawSprite,animationFrame,surfaceTransform} from './art.js';
 import {characterMotion} from './character-state.js';
 import {drawEnergyBubbles} from './energy-bubbles.js';
@@ -31,13 +31,14 @@ import {drawBirds} from './birds.js';
 export {resetPose} from './character-state.js';
 const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
-function terrain(c,art,s,cam,solids){
+function terrain(c,art,s,cam,solids,seabed){
   if(s.kind==='weak-wall')return;
   if(s.kind==='reef'){
     drawReef(c,art,s,cam);
-    // Match the existing seabed tiles exactly, but put their pebbles in front
-    // of the reef's foot so its cropped bottom edge is buried in the bed.
+    // Only grounded reefs need their cropped foot buried in pebbles.
+    // Suspended obstacles retain their open lower swimming passage.
     const seabedY=s.seabedY??s.bottom;
+    if(seabedY<seabed-1)return;
     c.save();c.beginPath();c.rect(s.x1-cam.x,seabedY-cam.y-28,s.x2-s.x1,74);c.clip();
     const left=Math.max(s.x1,cam.x),right=Math.min(s.x2,cam.x+W);
     for(let x=Math.floor(left/240)*240;x<right;x+=240)
@@ -62,7 +63,7 @@ function terrain(c,art,s,cam,solids){
     else drawFloatingIce(c,art,s,cam);
     c.restore();if(s.kind==='tunnel')drawIceBottom(c,art,s,cam);return;
   }
-  c.save();polygon(c,s,cam);c.clip();
+  c.save();if(s.roughBottom)clipIceBottom(c,s,cam);else{polygon(c,s,cam);c.clip();}
   c.transform(1,t.slope,0,1,t.x,t.y);
   const source=art.sprites.get('ice-wall-repeat')||art.sprites.get('ice-cliff');
   const image=art.wallTexture||art.images.get(source.url||art.ENV+source.file);
@@ -74,8 +75,9 @@ function terrain(c,art,s,cam,solids){
     }
   }
   c.restore();
-  drawWallCracks(c,art,s,cam);
+  c.save();if(s.roughBottom)clipIceBottom(c,s,cam);drawWallCracks(c,art,s,cam);c.restore();
   drawWallPencilEdges(c,art,s,solids,cam);
+  if(s.roughBottom)drawIceBottom(c,art,s,cam);
   // Preserve the snow's top silhouette instead of clipping it to a straight
   // collision edge. Only the platform's horizontal extent limits this layer.
   const cap=art.snowCapTexture;
@@ -155,8 +157,9 @@ function scenery(c,art,level,cam,sy){
     if(opacity<=0)return;
     const url=art.backgrounds?.get(theme)||art.ENV+'coast-background.png';
     c.save();c.globalAlpha=opacity*(theme==='cave'?.72:1);
-    if(theme==='cave')c.drawImage(art.images.get(url),-cam.x*.07,-120-cam.y*.12,width,960);
-    else c.drawImage(art.images.get(url),-cam.x*.07,sy-height*.72,width,height);
+    const x=Math.min(0,-cam.x*.07);
+    if(theme==='cave')c.drawImage(art.images.get(url),x,-120-cam.y*.12,width,960);
+    else c.drawImage(art.images.get(url),x,sy-height*.72,width,height);
     c.restore();
   };
   const theme=level.theme||'coast';
@@ -181,7 +184,7 @@ export function render(c,state,level){
     }
     c.restore();
   }
-  const regions=level.basinSurfaces||[{left:cam.x,right:cam.x+W,waterY:level.waterY}];
+  const regions=visibleWaterRegions(level,cam,W);
   if(regions.some(r=>r.waterY-cam.y<H)){
     c.save();c.beginPath();for(const r of regions)c.rect(r.left-cam.x,Math.max(0,r.waterY-cam.y),r.right-r.left,H);c.clip();
     // The parallax image must still cover the screen at the far end of long levels.
@@ -228,7 +231,7 @@ export function render(c,state,level){
       }c.restore();
     }
     decorations(c,art,level,cam,true);
-    for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids);
+    for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids,level.bottom);
     drawBreakableWalls(c,art,level,cam);
     decorations(c,art,level,cam);
     for(const original of level.rocks||[]){

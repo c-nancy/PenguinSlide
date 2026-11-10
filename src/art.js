@@ -69,7 +69,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
     if(level.seals?.length)needed.push(...SEAL_URLS);
     if(level.gates?.length)needed.push(...WALL_BREAK_URLS);
     if(level.solids?.some(s=>s.kind==='reef'))needed.push(...REEF_URLS);
-    if(level.solids?.some(s=>s.kind==='tunnel'))needed.push(...BOTTOM_EDGE_URLS,...(level.solids.some(s=>s.caveRoof)?CORNER_URLS:[]));
+    if(level.solids?.some(s=>s.kind==='tunnel'||s.roughBottom))needed.push(...BOTTOM_EDGE_URLS,...(level.solids.some(s=>s.caveRoof)?CORNER_URLS:[]));
     if(level.tutorial)needed.push(TUTORIAL_KEYS_URL);
     const urls=[...new Set(needed)];let completed=0;report(0,urls.length);
     await Promise.all(urls.map(url=>loadImage(url,background).then(()=>report(++completed,urls.length))));

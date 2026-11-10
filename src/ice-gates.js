@@ -20,7 +20,7 @@ export function advanceGates(world,p,input,dt){
  }
  world.basinSurfaces=world.source.basins.map(b=>({...b,waterY:b.feed===undefined?b.initial:b.initial-(b.initial-b.target)*world.gateActors[b.feed].fill}));
  world.waterY=world.basinSurfaces.find(b=>p.x>=b.left&&p.x<=b.right)?.waterY??world.source.waterY;
- world.waters=[[world.source.solids[0].x1,world.width]];
+ world.waters=world.basinSurfaces.map(b=>[b.left,b.right]);
  if(p.grounded&&p.y>world.waterY){p.grounded=false;p.wet=true;}
  world.tideDiving=input.y>0;world.tidePreviousY=p.y;
 }
