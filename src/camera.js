@@ -1,3 +1,10 @@
+export const VIEW_WIDTH=1280,VIEW_HEIGHT=720;
+
+export function cameraX(level,player,width=VIEW_WIDTH,lead=0){
+  const anchor=Math.min(410,width*.36);
+  return Math.max(-120,Math.min(level.width-width+120,player.x-anchor+(level.cameraLead||0)+lead));
+}
+
 export function cameraY(level,player){
   const lowerLimit=level.bottom-678;
   if(level.cameraY!==undefined)return level.cameraY;

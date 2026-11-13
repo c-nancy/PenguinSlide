@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {releaseImageURL} from './release-images.js';
 const fishURL=releaseImageURL(new URL('../assets/ui/health-fish.png',import.meta.url).href);
 
@@ -6,8 +7,9 @@ export function shouldShowHealingFish(before,player){
 }
 
 export function healingFlight(player,cam,canvas,meter){
-  const width=Math.min(44,44*canvas.width/1280),height=width*131/320;
-  const start={x:canvas.left+(player.x-cam.x)*canvas.width/1280,
+  const scaleX=canvas.width/(cam.width??VIEW_WIDTH);
+  const width=Math.min(44,44*scaleX),height=width*131/320;
+  const start={x:canvas.left+(player.x-cam.x)*scaleX,
     y:canvas.top+(player.y-cam.y-43)*canvas.height/720};
   const end={x:meter.left+meter.width/2,y:meter.top+meter.height/2};
   const transform=(point,scale)=>`translate(${point.x-width/2}px, ${point.y-height/2}px) scale(${scale})`;

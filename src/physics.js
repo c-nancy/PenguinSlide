@@ -89,6 +89,19 @@ function exposedSideTop(s,left,level){
   }
   return top>=s.bottom?Infinity:top;
 }
+function nearIceSide(p,level,direction){
+  const reach=CONFIG.radius+48;
+  if(direction<0?p.x<=reach:p.x>=level.width-reach)return true;
+  return level.solids.some(s=>{
+    if(s.kind==='reef'||s.kind==='weak-wall')return false;
+    const left=direction>0,edge=left?s.x1:s.x2,gap=(edge-p.x)*direction;
+    if(gap<0||gap>reach||p.y-CONFIG.halfHeight>=iceBottomAt(s,edge))return false;
+    if(hasShape(s)){
+      return Boolean(shapeSweep(s,'x',p.x,p.x+direction*48,p.y,CONFIG.radius,CONFIG.halfHeight));
+    }
+    return p.y+CONFIG.halfHeight>exposedSideTop(s,left,level)+5;
+  });
+}
 function touchingSurfaces(p,level){
   const keys=[],r=CONFIG.radius,h=CONFIG.halfHeight,e=.5;
   if(p.x<=r+e)keys.push('edge:left');
@@ -137,8 +150,9 @@ function moveOnIce(p,s,ix,dt) {
   speed=Math.sign(speed)*Math.max(0,Math.abs(speed)-friction);
   p.vx=speed*t.x;p.vy=speed*t.y;
 }
-function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
-  const inputLength=Math.hypot(ix,iy)||1;
+function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0,swimAlongInput=false) {
+  const effort=Math.hypot(ix,iy);
+  const inputLength=effort||1;
   // Build forward propulsion with swimming speed, keeping full thrust available
   // for braking. Momentum carries across water entry; no timer or speed reset.
   const relativeX=p.vx-flowX;
@@ -147,10 +161,23 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0) {
   const upstream=ix*flowX<0&&ix*p.vx>=0;
   const propulsionSpeed=upstream?Math.max(0,Math.abs(relativeX)-.75*Math.abs(flowX)):Math.abs(relativeX);
   const ramp=clamp(propulsionSpeed/CONFIG.swimCruiseSpeed,0,1);
-  const drive=ix*relativeX<0||iy<0?CONFIG.swimHorizontalThrust:
+  const drive=ix*relativeX<0||(!swimAlongInput&&iy<0)?CONFIG.swimHorizontalThrust:
     CONFIG.swimStartThrust+(CONFIG.swimHorizontalThrust-CONFIG.swimStartThrust)*ramp*ramp*(3-2*ramp);
-  const thrustX=ix/inputLength*drive;
-  const thrustY=iy/inputLength*CONFIG.swimThrust;
+  const directionX=ix/inputLength,directionY=iy/inputLength;
+  let thrustX=directionX*drive,thrustY=directionY*CONFIG.swimThrust;
+  if(swimAlongInput&&effort){
+    // Partial stick travel applies part of the thrust available in that direction.
+    const strength=Math.min(1,effort);
+    const thrust=strength/Math.hypot(directionX/drive,directionY/CONFIG.swimThrust);
+    thrustX=directionX*thrust;
+    thrustY=directionY*thrust;
+    // Brake excess sideways drift during an active turn, preserving vertical lift.
+    const sideways=directionY*(directionY*relativeX-directionX*p.vy);
+    if(sideways*relativeX>0){
+      const grip=1-Math.exp(-7*strength*immersion*dt);
+      p.vx-=Math.sign(relativeX)*Math.min(Math.abs(relativeX),Math.abs(sideways))*grip;
+    }
+  }
   p.vx+=(ix*CONFIG.airControl*(1-immersion)+thrustX*immersion)*dt;
   p.vy+=(CONFIG.gravity*(1-immersion)+(thrustY-CONFIG.buoyancy)*immersion)*dt;
   // Blend both media through the waterline; airborne speed no longer survives
@@ -261,10 +288,19 @@ function stepCore(p,input,level,dt) {
   p.controlLock=Math.max(0,p.controlLock-dt);
   const impacts=[];
   const impact=(key,speed,nx,ny,details={})=>impacts.push({key,speed,nx,ny,...details});
-  const ix=recovering?0:clamp(input.x||0,-1,1),iy=recovering?0:clamp(input.y||0,-1,1);
+  let ix=recovering?0:clamp(input.x||0,-1,1),iy=recovering?0:clamp(input.y||0,-1,1);
+  // A nearly vertical touch gesture beside ice should not steer into the wall.
+  if(p.wet&&input.swimAlongInput&&iy<-.15&&Math.abs(ix)<=-iy*Math.tan(Math.PI/9)){
+    const direction=Math.sign(ix||p.vx);
+    if(direction&&nearIceSide(p,level,direction)){
+      ix=0;iy=-Math.hypot(input.x||0,iy);
+      if(p.vx*direction>0&&Math.abs(p.vx)<160)p.vx=0;
+    }
+  }
   const jump=!recovering&&!!input.jump;
+  const surfaceHop=jump||(!recovering&&input.surfaceHop);
   const oldX=p.x,oldY=p.y,wasGrounded=p.grounded,wasWet=p.wet;
-  if(ix)p.facing=ix;
+  if(ix)p.facing=Math.sign(ix);
   if(wasWet)recordDepth(p,level);
   const support=wasGrounded?supportFor(p,level):null;
   const groundMotion=!!support&&!jump&&!wasWet;
@@ -276,12 +312,12 @@ function stepCore(p,input,level,dt) {
     }
     // An uncharged swimmer can make one ordinary hop near the surface. Deep
     // swimming and a charged ascent still use their existing propulsion rules.
-    if(wasWet&&jump&&!p.surfaceJumped&&p.energy<=0&&p.y<=level.waterY+CONFIG.halfHeight){
+    if(wasWet&&surfaceHop&&!p.surfaceJumped&&p.energy<=0&&p.y<=level.waterY+CONFIG.halfHeight){
       p.vy=Math.min(p.vy,-CONFIG.jump);p.surfaceJumped=true;p.event='jump';
     }
     const immersion=waterColumn(p,level)?clamp((p.y+CONFIG.halfHeight-level.waterY)/(2*CONFIG.halfHeight),0,1):0;
     moveFreely(p,ix,iy,immersion,p.y-level.waterY-(p.chargeFloor||0),dt,
-      immersion>0?waterCurrentAt(level,p.x,p.y):0);
+      immersion>0?waterCurrentAt(level,p.x,p.y):0,input.swimAlongInput);
   }
 
   const incoming={vx:p.vx,vy:p.vy};

@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {waterCurrentAt} from './currents.js';
 import {drawSprite} from './art.js';
 import {fishDrift} from './fish-motion.js';
@@ -6,7 +7,7 @@ const mod=(value,range)=>(value%range+range)%range;
 export function drawCurrents(c,art,level,cam,time){
   c.save();c.strokeStyle='#557579';c.lineWidth=1.3;
   for(const flow of level.currents||[]){
-    if(flow.x2<cam.x||flow.x1>cam.x+1280)continue;
+    if(flow.x2<cam.x||flow.x1>cam.x+(cam.width??VIEW_WIDTH))continue;
     const width=flow.x2-flow.x1,direction=Math.sign(flow.speed);
     for(let row=0;row<3;row++)for(let i=0;i<Math.ceil(width/105);i++){
       const x=flow.x1+mod(i*105+row*31+time*flow.speed*.38,width);
@@ -22,7 +23,7 @@ export function drawCurrents(c,art,level,cam,time){
     const length=Math.hypot(path.x2-path.x1,path.y2-path.y1);
     for(let i=0;i<2;i++){
       const t=mod(time*path.speed/length+i*.43,1),x=path.x1+(path.x2-path.x1)*t,y=path.y1+(path.y2-path.y1)*t;
-      if(x<cam.x-100||x>cam.x+1380)continue;
+      if(x<cam.x-100||x>cam.x+(cam.width??VIEW_WIDTH)+100)continue;
       c.globalAlpha=.48*Math.min(1,t*8,(1-t)*8);
       const drift=fishDrift(path.x1,path.y1,time,i);
       drawSprite(c,art,'fish-school-02',x-cam.x-32+drift.x,y-cam.y-12+drift.y,64,26);

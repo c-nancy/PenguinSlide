@@ -1,5 +1,5 @@
 import {surfaceAt} from './level.js';
-import {cameraY} from './camera.js';
+import {VIEW_WIDTH,cameraX,cameraY} from './camera.js';
 import {gateSolid} from './ice-gates.js';
 export const THIN_URLS=[new URL('../assets/terrain/floe-variants/thin-break-01.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-02.png',import.meta.url).href,new URL('../assets/terrain/floe-variants/thin-break-03.png',import.meta.url).href];
 export function advanceThin(world,p,dt){
@@ -15,8 +15,8 @@ export function advanceThin(world,p,dt){
    s.age+=dt;
    const safe=p.grounded&&!p.wet&&world.source.solids.some(o=>p.x>=o.x1&&p.x<=o.x2&&Math.abs(p.y+22-surfaceAt(o,p.x))<5);
    const clearAnimals=!(world.sealActors||[]).some(a=>a.x+110>s.x1&&a.x-110<s.x2&&a.y+40>s.y1&&a.y-40<s.bottom);
-   const cam=world.camera||{x:Math.max(-120,Math.min(world.source.width-1160,p.x-410)),y:cameraY(world.source,p)};
-   const offscreen=s.x2<cam.x||s.x1>cam.x+1280||s.bottom+40<cam.y||s.y1-5>cam.y+720;
+   const cam=world.camera||{x:cameraX(world.source,p),y:cameraY(world.source,p)};
+   const offscreen=s.x2<cam.x||s.x1>cam.x+(cam.width??VIEW_WIDTH)||s.bottom+40<cam.y||s.y1-5>cam.y+720;
    const far=(p.x+100<s.x1||p.x-100>s.x2)&&clearAnimals&&offscreen;
    if(s.phase==='restoring'){
     if(!safe||!far){s.phase='broken';s.restore=0;s.age=1;}

@@ -28,10 +28,11 @@ import {drawTutorialKeys} from './tutorial-guidance.js';
 import {rockBounds} from './rock-outline.js';
 import {rockAppearance} from './stone-animation.js';
 import {drawBirds} from './birds.js';
+import {VIEW_WIDTH,VIEW_HEIGHT as H} from './camera.js';
 export {resetPose} from './character-state.js';
-const W=1280,H=720;
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
 function terrain(c,art,s,cam,solids,seabed){
+  const W=cam.width??VIEW_WIDTH;
   if(s.kind==='weak-wall')return;
   if(s.kind==='reef'){
     drawReef(c,art,s,cam);
@@ -98,7 +99,7 @@ function penguin(c,art,p,cam,time,level,menu=false){
   const clip=art.character.animations[pose];
   const frame=pose==='landing'?clip.frames[p.grounded?animationFrame(clip,.15+landAge):0]:clip.frames[animationFrame(clip,pose==='walk'?walkTime:time)];
   const scale=(pose==='slide'||pose==='swim'?69/clip.frames[0].contentBounds[2]:48/clip.frames[0].contentBounds[3])*(menu?3.25:1);
-  const [bx,by,bw,bh]=frame.contentBounds,x=menu?W/2:p.x-cam.x,y=menu?445:p.y-cam.y+(p.grounded?3:0);
+  const [bx,by,bw,bh]=frame.contentBounds,x=menu?(cam.width??VIEW_WIDTH)/2:p.x-cam.x,y=menu?445:p.y-cam.y+(p.grounded?3:0);
   let tilt=0;
   if(pose==='swim')tilt=swimTilt;
   else if(p.grounded){
@@ -121,6 +122,7 @@ function penguin(c,art,p,cam,time,level,menu=false){
 const PROP_SIZE={cairn:[36,34],signpost:[73,66],rocks:[100,45],buoy:[42,66],footprints:[88,24],'cave-arch':[210,150],'ice-cracks':[100,82],envelope:[38,25],'home-lighthouse':[260,285],lighthouse:[100,155],checkpoint:[96,25.47]};
 const GROUND_PROPS=new Set(['cairn','signpost','rocks','footprints','envelope','home-lighthouse','lighthouse','checkpoint']);
 function decorations(c,art,level,cam,behind=false){
+  const W=cam.width??VIEW_WIDTH;
   for(const item of level.decorations||[]){
     if((item.kind==='cave-arch')!==behind)continue;
     const [dw,dh]=PROP_SIZE[item.kind]||[60,60],w=item.w||dw,h=item.h||dh;
@@ -132,6 +134,7 @@ function decorations(c,art,level,cam,behind=false){
   }
 }
 function landmarks(c,art,level,cam,p,mode){
+  const W=cam.width??VIEW_WIDTH;
   for(const [index,cp] of (level.checkpoints||[]).entries()){
     const x=cp.x-cam.x,y=cp.y+CONFIG.halfHeight-cam.y;
     if(x< -170||x>W+100)continue;
@@ -151,6 +154,7 @@ function landmarks(c,art,level,cam,p,mode){
   else if(goal.kind==='cave-exit')drawGroundedSprite(c,art,'finish-flag',level,cam,goal.x+45,goal.y,62,76);
 }
 function scenery(c,art,level,cam,sy){
+  const W=cam.width??VIEW_WIDTH;
   const width=Math.max(1800,W+level.width*.07),height=width*1024/1536;
   const seaBlend=level.openSeaFrom===undefined?0:Math.max(0,Math.min(1,(cam.x+W*.45-level.openSeaFrom)/700));
   const backdrop=(theme,opacity)=>{
@@ -173,6 +177,7 @@ function scenery(c,art,level,cam,sy){
 }
 export function render(c,state,level){
   const {p,cam,time,particles,mode,art}=state;
+  const W=cam.width??VIEW_WIDTH;
   c.clearRect(0,0,W,H);c.fillStyle='#f2ecdf';c.fillRect(0,0,W,H);if(!art)return;
   const sy=level.waterY-cam.y,bed=level.bottom-cam.y;
   const waterBackground=waterBackgroundFrame(level,cam);
@@ -189,7 +194,7 @@ export function render(c,state,level){
     c.save();c.beginPath();for(const r of regions)c.rect(r.left-cam.x,Math.max(0,r.waterY-cam.y),r.right-r.left,H);c.clip();
     // The parallax image must still cover the screen at the far end of long levels.
     const underwaterX=Math.min(0,-cam.x*.045);
-    const underwaterWidth=Math.max(1580,W+Math.max(0,level.width-1160)*.045+16);
+    const underwaterWidth=Math.max(1580,W+Math.max(0,level.width-W+120)*.045+16);
     c.drawImage(art.images.get(art.backgrounds?.get('underwater')||art.ENV+'underwater-background.png'),underwaterX,waterBackground.underwaterY,underwaterWidth,waterBackground.underwaterHeight);
     c.globalAlpha=.45;
     for(let i=0;i<12;i++){const bx=i*370+110,by=(level.source||level).waterY+150+(i*83%400),drift=fishDrift(bx,by,time,i),x=bx-cam.x+drift.x,y=by-cam.y+drift.y;if(x>-150&&x<W+100){

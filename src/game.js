@@ -2,7 +2,7 @@ import {createBubbleSound} from './bubble-sound.js';
 import {createSeals,updateSeals,sealEffects} from './seals.js';
 import {movingWorld} from './moving-ice.js';
 import {emitRing,updateRings} from './bubble-rings.js';
-import { LEVELS } from './levels.js';
+import { LEVELS as ALL_LEVELS } from './levels.js';
 import { CONFIG, createPlayer, step, resetPlayer, remainingCharge } from './physics.js';
 import { render, resetPose } from './render.js';
 import { HEALTH } from './health.js';
@@ -11,10 +11,10 @@ import { loadArt } from './art.js';
 import {addImpactEffect} from './impact-effects.js';
 import {createAmbientBubbles,updateAmbientBubbles} from './ambient-bubbles.js';
 import {snowCapStrip} from './snow-cap-ends.js';
-import { loadProgress, saveProgress, completeChapter, selectChapter } from './campaign.js';
+import { loadProgress, saveProgress, completeChapter, selectChapter, openMobileCampaign } from './campaign.js';
 import { createNotices } from './narrative.js';
 import {characterMotion,groundMotionLabel} from './character-state.js';
-import {cameraY,constrainCameraY} from './camera.js';
+import {VIEW_WIDTH,VIEW_HEIGHT,cameraX,cameraY,constrainCameraY} from './camera.js';
 import {dismissTutorialKey} from './tutorial-guidance.js';
 import {createHealingFeedback} from './healing-feedback.js';
 import {createBirds,updateBirds} from './birds.js';
@@ -23,6 +23,18 @@ import {createWaterSound} from './water-sound.js';
 import {loadOnceAfterCover} from './menu-loading.js';
 
 const $=id=>document.getElementById(id);
+const query=new URLSearchParams(location.search);
+const mobileDemo=query.get('demo')==='mobile';
+const touchMode=mobileDemo||query.get('mobile')==='1'||matchMedia('(pointer: coarse)').matches;
+const landscape=matchMedia('(orientation: landscape)');
+const LEVELS=mobileDemo?ALL_LEVELS.slice(0,3):ALL_LEVELS;
+document.body.classList.toggle('touch-mode',touchMode);
+const touchControls=$('touch-controls');
+const joystickElement=$('touch-joystick');
+const joystick={pointerId:null,x:0,y:0,breached:false};
+const ascentThreshold=-.15;
+const touchAction=$('touch-action');
+let touchActionPointer=null;
 const canvas=$('game'),ctx=canvas.getContext('2d'),frameElement=document.querySelector('.game-frame');
 const updateHealthFish=createHealthHUD($('health-meter'));
 let storage;try{storage=window.localStorage;}catch{/* A private session can still play. */}
@@ -36,19 +48,42 @@ function updateMusicButton(){
   $('music').title=music.enabled?'关闭背景音乐':'开启背景音乐';
 }
 $('music').onclick=()=>{music.toggle();updateMusicButton();};updateMusicButton();
-let progress=loadProgress(storage,LEVELS.length),chapter=progress.current,level=LEVELS[chapter];
+const {storage:campaignStorage,progress:initialProgress}=touchMode
+  ?openMobileCampaign(storage,LEVELS.length,mobileDemo)
+  :{storage,progress:loadProgress(storage,LEVELS.length)};
+let progress=initialProgress,chapter=progress.current,level=LEVELS[chapter];
 let p=createPlayer(level.start.x,level.start.y);
-const state={seals:createSeals(level),rings:[],p,cam:{x:p.x-410+(level.cameraLead||0),y:cameraY(level,p)},birds:createBirds(level),ambientBubbles:createAmbientBubbles(movingWorld(p,level)),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
+const state={seals:createSeals(level),rings:[],p,cam:{x:cameraX(level,p),y:cameraY(level,p),width:VIEW_WIDTH},birds:createBirds(level),ambientBubbles:createAmbientBubbles(movingWorld(p,level)),time:0,particles:[],waterEffects:[],impactEffects:[],shake:0,mode:'menu'};
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 const healingFeedback=createHealingFeedback(canvas,$('health-meter'),()=>reducedMotion.matches);
 const keys=new Set();
 let last=0,accumulator=0,jumpQueued=false,elapsed=0,started=false,chaptersReturn='menu',effectTick=0;
 let transitioning=false,artReady=false,transitionInterrupted=false,failedChapter=null;
 const notices=createNotices(id=>{if(id&&!progress.seenStory.includes(id)){progress={...progress,seenStory:[...progress.seenStory,id]};persist();}});
-function persist(){saveProgress(storage,progress);}
-function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;music.setMode(mode);waterSound.setMode(mode);bubbleSound.setMode(mode);frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;}
+function persist(){saveProgress(campaignStorage,progress);}
+function setMode(mode){if(mode!=='playing')healingFeedback.clear();state.mode=mode;music.setMode(mode);waterSound.setMode(mode);bubbleSound.setMode(mode);frameElement.dataset.mode=mode;frameElement.dataset.chapter=level.id;touchControls.hidden=!touchMode||mode!=='playing';}
 function focusGame(){canvas.focus({preventScroll:true});}
-function clearInput(){keys.clear();jumpQueued=false;accumulator=0;}
+function resetJoystick(){
+  const {pointerId}=joystick;
+  joystick.pointerId=null;
+  joystick.x=joystick.y=0;
+  joystick.breached=false;
+  joystickElement.style.removeProperty('--thumb-x');
+  joystickElement.style.removeProperty('--thumb-y');
+  if(pointerId!==null&&joystickElement.hasPointerCapture(pointerId))joystickElement.releasePointerCapture(pointerId);
+}
+function resetTouchAction(){
+  const id=touchActionPointer;
+  touchActionPointer=null;
+  touchAction.classList.remove('held');
+  if(id!==null&&touchAction.hasPointerCapture(id))touchAction.releasePointerCapture(id);
+}
+function clearInput(){
+  keys.clear();
+  resetJoystick();
+  resetTouchAction();
+  jumpQueued=false;accumulator=0;
+}
 function clearEffects(){state.seals=createSeals(level);state.rings=[];waterSound.reset();bubbleSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(movingWorld(p,level));state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
 function hud(show){$('game-hud').hidden=!show;$('bottom-hud').hidden=!show;$('scene-caption').hidden=true;}
@@ -57,12 +92,13 @@ function play(){
   if(p.dead){dialog('dead');return;}
   if(p.finished){dialog(chapter===LEVELS.length-1?'finished':'chapter-complete');return;}
   started=true;setMode('playing');$('overlay').hidden=true;$('overlay').classList.remove('modal');hud(true);clearInput();focusGame();
+  if(touchMode&&landscape.matches)window.scrollTo(0,0);
   const next=LEVELS[chapter+1];
   if(next)setTimeout(()=>{if(state.mode==='playing')state.art.ensureLevel(next,true).catch(()=>{});},2000);
 }
 function refreshMenu(){
   $('start').textContent='Start';
-  $('journey-status').textContent=`两段练习与 ${LEVELS.length-2} 章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
+  $('journey-status').textContent=mobileDemo?`手机试玩版 · 已完成 ${progress.completed.length} / 3 关`:`两段练习与 ${LEVELS.length-2} 章旅程 · 已走过 ${progress.completed.length} / ${LEVELS.length} 站`;
 }
 function menu(){setMode('menu');$('overlay').hidden=false;$('overlay').classList.remove('modal');$('intro').hidden=false;$('dialog').hidden=true;hud(false);refreshMenu();$('start').focus();}
 function dialog(kind){
@@ -72,13 +108,14 @@ function dialog(kind){
   if(kind==='finished'){hud(false);$('scene-caption').hidden=true;}
   $('chapter-list').hidden=kind!=='chapters';
   $('chapter-story').hidden=true;
-  $('dialog-title').hidden=['paused','chapter-complete','finished','dead'].includes(kind);
+  $('dialog-title').hidden=['paused','chapter-complete','finished','dead'].includes(kind)&&!(mobileDemo&&kind==='finished');
   $('dialog-text').hidden=kind!=='dead';
   $('dialog-kicker').hidden=kind==='chapters';
   $('chapter-story').textContent=[level.story.entry,level.story.mid,level.story.exit].filter(Boolean).join('\n');
   const titles={dead:'歇一歇，再出发。',finished:'旅程暂歇，大海仍在前方。',paused:'歇一会儿',chapters:'沿着海湾，一站一站', 'chapter-complete':`${level.title} · 已走过`};
   $('dialog-kicker').textContent=kind==='paused'?`${chapter+1}/${LEVELS.length}`:['chapter-complete','finished','dead'].includes(kind)?`${chapter+1}/${LEVELS.length}·${level.title}`:kind==='chapters'?'先熟悉脚下，再走向海湾':`第 ${chapter+1} 站 / ${LEVELS.length} · ${level.title}`;
   $('dialog-title').textContent=titles[kind];
+  if(mobileDemo&&kind==='finished')$('dialog-title').textContent='试玩完成';
   const retryPoint=p.checkpoint&&level.checkpoints?.[p.checkpointIndex]?'最近激活的巢':'本章起点';
   const texts={
     dead:`生命值已耗尽。从${retryPoint}重新出发。`,
@@ -96,7 +133,10 @@ function dialog(kind){
   if(kind==='chapters')renderChapters();
   if(kind==='chapters'){
     $('dialog').scrollTop=0;
-    $('chapter-list').querySelector('button:not(:disabled)')?.focus({preventScroll:true});
+    const list=$('chapter-list');
+    const current=list.querySelector('[aria-current]');
+    if(touchMode&&current)list.scrollTop=current.offsetTop-(list.clientHeight-current.offsetHeight)/2;
+    (touchMode?current:list.querySelector('button:not(:disabled)'))?.focus({preventScroll:true});
   }else $('resume').focus({preventScroll:true});
 }
 function renderChapters(){
@@ -127,9 +167,9 @@ async function enterChapter(index){
     progress=selectChapter(progress,index,LEVELS.length);chapter=progress.current;level=LEVELS[chapter];persist();
     p=createPlayer(level.start.x,level.start.y);state.p=p;resetPlayer(p,level,true);resetPose(p);
     clearEffects();notices.clear();state.time=0;elapsed=0;
-    state.cam={x:Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0))),y:cameraY(level,p)};
+    state.cam.x=cameraX(level,p,state.cam.width);state.cam.y=cameraY(level,p);
     setMode('transition');
-    $('route-end').setAttribute('aria-label',chapter===LEVELS.length-1?'当前旅途暂止：灯塔':'终点旗子：下一站');
+    $('route-end').setAttribute('aria-label',chapter===LEVELS.length-1?(mobileDemo?'试玩终点':'当前旅途暂止：灯塔'):'终点旗子：下一站');
     if(!reducedMotion.matches)await curtain.animate([{opacity:1},{opacity:0}],{duration:250,fill:'forwards',easing:'ease-in'}).finished;
   }catch(error){
     console.error(error);failedChapter=index;
@@ -144,7 +184,7 @@ async function enterChapter(index){
 function retry(){
   if(!started||transitioning||!['playing','paused','dead'].includes(state.mode))return;
   resetPlayer(p,level);resetPose(p);clearEffects();notices.clear();hideNotice();
-  state.cam.x=Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0)));state.cam.y=cameraY(level,p);
+  state.cam.x=cameraX(level,p,state.cam.width);state.cam.y=cameraY(level,p);
   play();
 }
 function finish(){
@@ -200,6 +240,52 @@ window.addEventListener('keydown',e=>{
   keys.add(e.code);if(freshPress&&['Space','ArrowUp','KeyW'].includes(e.code))jumpQueued=true;
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
+function moveJoystick(event){
+  const bounds=joystickElement.getBoundingClientRect();
+  const dx=event.clientX-(bounds.left+bounds.width/2);
+  const dy=event.clientY-(bounds.top+bounds.height/2);
+  const distance=Math.hypot(dx,dy);
+  const travel=bounds.width*.28;
+  const scale=distance>travel?travel/distance:1;
+  joystickElement.style.setProperty('--thumb-x',`${dx*scale}px`);
+  joystickElement.style.setProperty('--thumb-y',`${dy*scale}px`);
+  const deadZone=Math.max(8,travel*.28);
+  const effort=Math.max(0,Math.min(1,(distance-deadZone)/(travel-deadZone)));
+  joystick.x=effort?dx/distance*effort:0;
+  joystick.y=effort?dy/distance*effort:0;
+  if(joystick.y>=ascentThreshold)joystick.breached=false;
+}
+joystickElement.addEventListener('pointerdown',event=>{
+  if(!touchMode||state.mode!=='playing'||event.button!==0||joystick.pointerId!==null)return;
+  event.preventDefault();
+  joystick.pointerId=event.pointerId;
+  joystickElement.setPointerCapture(event.pointerId);
+  moveJoystick(event);
+});
+joystickElement.addEventListener('pointermove',event=>{
+  if(event.pointerId===joystick.pointerId)moveJoystick(event);
+});
+for(const type of ['pointerup','pointercancel','lostpointercapture']){
+  joystickElement.addEventListener(type,event=>{
+    if(event.pointerId===joystick.pointerId)resetJoystick();
+  });
+}
+touchControls.addEventListener('contextmenu',event=>event.preventDefault());
+touchAction.addEventListener('pointerdown',event=>{
+  if(!touchMode||state.mode!=='playing'||event.button!==0||touchActionPointer!==null)return;
+  event.preventDefault();
+  touchActionPointer=event.pointerId;
+  touchAction.setPointerCapture(event.pointerId);
+  touchAction.classList.add('held');
+  if(p.wet){
+    if(emitRing(state.rings,p,characterMotion(p,state.time),state.time))bubbleSound.play('ring');
+  }else if(p.grounded)jumpQueued=true;
+});
+for(const type of ['pointerup','pointercancel','lostpointercapture']){
+  touchAction.addEventListener(type,event=>{
+    if(event.pointerId===touchActionPointer)resetTouchAction();
+  });
+}
 function interrupt(){clearInput();if(transitioning)transitionInterrupted=true;else if(state.mode==='playing')dialog('paused');}
 window.addEventListener('blur',interrupt);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)interrupt();});
@@ -231,7 +317,17 @@ function update(dt){
   if(state.mode!=='playing')return;
   state.time+=dt;
   elapsed+=dt;effectTick++;
-  const input={x:Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft')),y:Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space'))),jump:jumpQueued};jumpQueued=false;
+  const swimY=p.wet?joystick.y:0;
+  const keyboardX=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+  const keyboardY=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space')));
+  const input={
+    x:keyboardX||joystick.x,
+    y:keyboardY||swimY,
+    jump:jumpQueued,
+    surfaceHop:swimY<ascentThreshold&&!joystick.breached&&keyboardY<=0,
+    swimAlongInput:p.wet&&!keyboardX&&!keyboardY
+  };
+  jumpQueued=false;
   const healthBefore=p.health,previous={x:p.x,y:p.y};
   if(state.seals.some(s=>s.mode==='bite')){
     if(updateSeals(state.seals,p,movingWorld(p,level),dt))retry();
@@ -243,13 +339,19 @@ function update(dt){
   }
   if(level.thinIce?.length){const world=movingWorld(p,level);world.sealActors=state.seals;world.camera=state.cam;}
   step(p,input,level,dt);
+  if(input.surfaceHop&&(p.surfaceJumped||p.event==='breach'))joystick.breached=true;
   if(updateSeals(state.seals,p,movingWorld(p,level),dt)){resetPlayer(p,level);resetPose(p);clearEffects();state.cam.y=cameraY(level,p);return;}
   sealEffects(state.seals,state.rings,state.ambientBubbles,state.time);
   updateRings(state.rings,movingWorld(p,level),dt,state.ambientBubbles,state.time);
   updateAmbientBubbles(state.ambientBubbles,p,previous,state.time,movingWorld(p,level));
   bubbleSound.update(state.ambientBubbles,state.rings,state.cam);
   updateBirds(state.birds,p,dt,movingWorld(p,level));
-  if(level.keyHints?.length)for(const code of keys)dismissTutorialKey(level,p,code);
+  if(level.keyHints?.length){
+    for(const code of keys)dismissTutorialKey(level,p,code);
+    if(joystick.x>0)dismissTutorialKey(level,p,'ArrowRight');
+    if(input.y>0&&swimY>0)dismissTutorialKey(level,p,'ArrowDown');
+    if(swimY<ascentThreshold&&input.y<0)dismissTutorialKey(level,p,'ArrowUp');
+  }
   state.impactEffects=state.impactEffects.filter(e=>state.time-e.born<.32);
   if(p.impactEffect)addImpactEffect(state,p.impactEffect);
   if(p.hit){
@@ -273,12 +375,16 @@ function update(dt){
   if(effectTick%6===0&&p.grounded&&Math.abs(p.vx)>80)state.particles.push({x:p.x-p.facing*15,y:p.y+20,vx:-p.vx*.25,vy:-20-Math.random()*30,life:.5,maxLife:.5,size:2,kind:'snow'});
   for(const a of state.particles){a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;if(a.kind!=='bubble')a.vy+=350*dt;}state.particles=state.particles.filter(a=>a.life>0);
   state.shake=Math.max(0,state.shake-dt);
-  const targetX=Math.max(-120,Math.min(level.width-1160,p.x-410+(level.cameraLead||0)+p.vx*.18));
+  const targetX=cameraX(level,p,state.cam.width,p.vx*.18);
   const targetY=cameraY(level,p);
   const ease=1-Math.exp(-4*dt);state.cam.x+=(targetX-state.cam.x)*ease;state.cam.y+=(targetY-state.cam.y)*ease;
   state.cam.y=constrainCameraY(level,p,state.cam.y);
 }
 function updateHUD(){
+  if(touchMode){
+    const label=p.wet?'吐气泡':'跳跃';
+    if(touchAction.textContent!==label)touchAction.textContent=label;
+  }
   $('health-value').textContent=p.health+' / '+HEALTH.max;
   updateHealthFish(p.health);
   $('health-box').classList.toggle('low',p.health<=25);
@@ -290,8 +396,8 @@ function updateHUD(){
   $('charge-meter').setAttribute('aria-valuenow',String(pct));
   const waiting=p.boosting&&p.y-level.waterY-(p.chargeFloor||0)>CONFIG.maxDepth;
   const assisting=p.wet&&p.boosting&&p.energy>0&&!waiting;
-  const horizontal=keys.has('KeyA')||keys.has('KeyD')||keys.has('ArrowLeft')||keys.has('ArrowRight');
-  const vertical=keys.has('KeyW')||keys.has('KeyS')||keys.has('ArrowUp')||keys.has('ArrowDown')||keys.has('Space');
+  const horizontal=joystick.x||keys.has('KeyA')||keys.has('KeyD')||keys.has('ArrowLeft')||keys.has('ArrowRight');
+  const vertical=joystick.y||keys.has('KeyW')||keys.has('KeyS')||keys.has('ArrowUp')||keys.has('ArrowDown')||keys.has('Space');
   const passive=p.wet&&!horizontal&&!vertical;
   $('charge-label').textContent=assisting?'深潜能量 · 助推中':q>=.995?'深潜能量 · 已满':'深潜能量';
   const groundPose=characterMotion(p,state.time,state.mode==='menu').pose;
@@ -308,12 +414,23 @@ function updateHUD(){
   $('retry').disabled=state.mode!=='playing';
   $('chapters').disabled=transitioning||state.mode==='chapters';
 }
-function resize(){healingFeedback.clear();const dpr=Math.min(window.devicePixelRatio||1,2);const r=canvas.getBoundingClientRect();canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);}
+function resize(){
+  healingFeedback.clear();
+  const dpr=Math.min(window.devicePixelRatio||1,2),r=canvas.getBoundingClientRect();
+  canvas.width=Math.round(r.width*dpr);canvas.height=Math.round(r.height*dpr);
+  const width=touchMode&&landscape.matches&&r.height>0?r.width/r.height*VIEW_HEIGHT:VIEW_WIDTH;
+  if(width!==state.cam.width){
+    state.cam.width=width;
+    state.cam.x=cameraX(level,p,width);
+    if(touchMode&&landscape.matches&&state.mode==='playing')window.scrollTo(0,0);
+  }
+}
 new ResizeObserver(resize).observe(canvas);resize();
 function frame(timestamp){
   const delta=last?Math.min((timestamp-last)/1000,.05):0;last=timestamp;accumulator+=delta;
   while(accumulator>=1/120){update(1/120);accumulator-=1/120;}
-  ctx.setTransform(canvas.width/1280,0,0,canvas.height/720,0,0);ctx.clearRect(0,0,1280,720);ctx.save();
+  ctx.setTransform(canvas.width/state.cam.width,0,0,canvas.height/VIEW_HEIGHT,0,0);
+  ctx.clearRect(0,0,state.cam.width,VIEW_HEIGHT);ctx.save();
   if(state.shake>0&&!reducedMotion.matches&&state.mode==='playing')ctx.translate(Math.sin(state.time*77)*state.shake*12,Math.cos(state.time*63)*state.shake*8);
   if(state.mode!=='menu')render(ctx,state,movingWorld(p,level));ctx.restore();updateHUD();requestAnimationFrame(frame);
 }

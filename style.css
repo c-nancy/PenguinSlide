@@ -14,6 +14,130 @@
 .chapter .health-box.low{background:transparent}
 .health-box.low .fish-fill{filter:sepia(1) saturate(2.5) hue-rotate(310deg)}
 .icon-button:disabled{opacity:.4;cursor:default}
+
+.touch-mode .shell {
+  padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+.touch-mode .topbar {
+  height: auto;
+  min-height: 44px;
+  padding-top: env(safe-area-inset-top);
+  gap: 8px;
+}
+.touch-mode .topbar nav { gap: 10px; }
+.game-layout { position: relative; }
+.touch-mode .game-frame {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+  container-type: inline-size;
+}
+.touch-mode .movement { opacity: 0; }
+@media (orientation: landscape) {
+  .touch-mode .shell {
+    position: relative;
+    max-width: none;
+    padding: 0;
+  }
+  .touch-mode .game-frame {
+    height: 100dvh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    container-type: size;
+  }
+  .touch-mode .vignette { border-radius: 0; }
+  .touch-mode:has(.game-frame[data-mode="playing"]) { overflow: hidden; }
+  .touch-mode #game { touch-action: none; }
+  .touch-mode #touch-controls {
+    left: calc(clamp(10px, 3vw, 28px) + env(safe-area-inset-left));
+    right: calc(clamp(10px, 3vw, 28px) + env(safe-area-inset-right));
+    bottom: calc(clamp(10px, 3vh, 24px) + env(safe-area-inset-bottom));
+  }
+  .touch-mode .topbar {
+    position: absolute;
+    z-index: 6;
+    inset: calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) auto auto;
+    min-height: 0;
+    padding: 0;
+  }
+  .touch-mode .brand { display: none; }
+  .touch-mode .topbar nav {
+    gap: 5px;
+    padding: 3px 5px;
+    border-radius: 20px;
+    background: #f5f0e5e6;
+  }
+  .touch-mode #chapters { padding: 6px; }
+  .touch-mode .topbar .icon-button { width: 36px; height: 36px; }
+  .touch-mode .intro #start {
+    /* Match the Start area painted into the cover, which crops around its centre. */
+    --cover-height: max(100cqh, 56.25cqw);
+    --cover-width: max(100cqw, 177.7778cqh);
+    left: calc(50% - .1234375 * var(--cover-width));
+    top: calc(50% + .1083333 * var(--cover-height));
+    width: calc(.2421875 * var(--cover-width));
+    height: calc(.2013889 * var(--cover-height));
+  }
+}
+#touch-controls {
+  position: absolute;
+  inset: auto clamp(10px, 3vw, 28px) clamp(10px, 3vh, 24px);
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+#touch-joystick,
+#touch-controls button {
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  border: 2px solid #fff8e3c2;
+  border-radius: 50%;
+  background: #4f4a423b;
+  box-shadow: 0 1px 4px #302d2840;
+}
+#touch-joystick {
+  position: relative;
+  width: clamp(76px, 29vmin, 126px);
+  aspect-ratio: 1;
+}
+.joystick-thumb {
+  position: absolute;
+  inset: 29%;
+  border: 1px solid #fff8e3b0;
+  border-radius: 50%;
+  background: #fcf8e8db;
+  box-shadow: 0 2px 5px #302d2840;
+  pointer-events: none;
+  transform: translate(var(--thumb-x, 0px), var(--thumb-y, 0px));
+}
+#touch-controls button {
+  display: grid;
+  place-items: center;
+  width: clamp(56px, 17vmin, 76px);
+  aspect-ratio: 1;
+  padding: 0;
+  background: #4f4a4294;
+  color: #fffbee;
+  font-size: 13px;
+  font-weight: 700;
+}
+#touch-controls button.held { background: #fff3d8e6; color: #3a352e; }
+@media (orientation: portrait) {
+  .touch-mode #rotate-hint[hidden] {
+    display: block !important;
+    text-align: center;
+    font-size: 14px;
+  }
+}
 #music{display:inline-grid;place-items:center;padding:0}
 .music-icon{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .music-icon ellipse{fill:currentColor;stroke:none}
@@ -148,6 +272,64 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
 #retry #retry-label{display:inline}
 @media(max-width:550px){#retry{width:108px;height:43px;padding-top:8px;font-size:10px;gap:5px}}
 
+/* The phone can have a wide viewport and a narrow game frame at the same time. */
+.touch-mode .game-top {
+  inset: clamp(4px, 1.6cqw, 12px) 3% auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(4px, 1.5cqw, 12px);
+  align-items: start;
+}
+.touch-mode .chapter {
+  width: min(100%, clamp(94px, 28cqw, 170px));
+  aspect-ratio: 1657 / 949;
+  justify-content: center;
+  padding: 3px clamp(7px, 3cqw, 22px) 0;
+  gap: clamp(1px, .5cqw, 4px);
+}
+.touch-mode .chapter .eyebrow {
+  font-size: clamp(7px, 1.7cqw, 10px);
+  letter-spacing: 1px;
+}
+.touch-mode .chapter strong {
+  font-size: clamp(10px, 2.7cqw, 15px);
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+.touch-mode .chapter .health-box { width: 100%; padding: 0; }
+.touch-mode .health-fish-track { gap: clamp(2px, .5cqw, 4px); margin: 0; padding: 1px 0; }
+.touch-mode .route {
+  --route-dot-size: clamp(14px, 5.5cqw, 28px);
+  display: flex;
+  justify-self: center;
+  width: min(100%, 172px);
+  height: clamp(30px, 9.5cqw, 44px);
+  gap: calc(var(--route-dot-size) / 2 + 2px);
+}
+.touch-mode .route-track { flex: 1; min-width: 0; }
+.touch-mode .route-nest { width: clamp(17px, 6cqw, 34px); }
+.touch-mode .route-flag { width: clamp(13px, 4.3cqw, 23px); transform: translateY(-3px); }
+.touch-mode .route-track #route-dot { width: var(--route-dot-size); }
+.touch-mode #retry {
+  justify-self: end;
+  width: min(100%, clamp(68px, 22cqw, 116px));
+  height: 44px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 2px;
+  background-size: 100% clamp(25px, 7.5cqw, 40px);
+  font-size: clamp(9px, 2.2cqw, 12px);
+  white-space: nowrap;
+}
+@media (orientation: landscape) {
+  .touch-mode .game-top {
+    top: calc(clamp(4px, 1.6cqw, 12px) + env(safe-area-inset-top));
+    left: calc(2% + env(safe-area-inset-left));
+    right: calc(2% + env(safe-area-inset-right));
+  }
+  .touch-mode #retry { margin-top: 38px; }
+}
+
 /* The chapter picker uses the wider toast cloud and a safe central text area. */
 .game-frame[data-mode=chapters] .dialog{background-image:url('./assets/optimized/c9db2d8340f54d9a8c9d391026e9d10e1f5cec760a37910e8c9609ab7a9fecea.webp');border:0;padding:150px 80px 42px;width:min(850px,94%)}
 .game-frame[data-mode=chapters] #dialog-title{max-width:76%;margin:0 auto 14px;font-size:clamp(16px,2vw,23px);line-height:1.45;text-wrap:balance}
@@ -232,6 +414,27 @@ button:disabled{cursor:default}.primary-button:disabled{opacity:.65;transform:no
   .game-frame[data-mode=chapters] .chapter-option strong{font-size:10px}
   .game-frame[data-mode=chapters] .chapter-option small{font-size:8px}
   .game-frame[data-mode=chapters] #resume{font-size:10px;line-height:16px;padding:2px 0}
+}
+.touch-mode .game-frame[data-mode=chapters] .chapter-list {
+  left: 20%;
+  width: 60%;
+  bottom: 22%;
+  touch-action: pan-y;
+}
+.touch-mode .game-frame[data-mode=chapters] #resume:hover { background: transparent; }
+.touch-mode .game-frame[data-mode=chapters] .chapter-option {
+  min-height: 44px;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 6px;
+  padding-inline: 3px;
+}
+.touch-mode .game-frame[data-mode=chapters] .chapter-option strong {
+  font-size: clamp(10px, 3.2cqw, 13px);
+  letter-spacing: 0;
+  white-space: normal;
+}
+.touch-mode .game-frame[data-mode=chapters] .chapter-option small {
+  font-size: clamp(8px, 2.3cqw, 10px);
 }
 /* Preserve the original cloud proportions in the pause menu. */
 .game-frame[data-mode=paused] .dialog{width:min(680px,94%);aspect-ratio:1657/949;border:0;padding:60px 48px 40px;background-size:contain;display:flex;flex-direction:column;align-items:center;justify-content:center}

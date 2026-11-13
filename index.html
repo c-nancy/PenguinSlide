@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f6f2">
   <meta name="description" content="一只企鹅，一片冰海。滑行、深潜，再跃向更高的地方。">
   <title>去远方 · To Distant Shores</title>
@@ -27,34 +27,43 @@
       </nav>
     </header>
 
-    <section class="game-frame" data-mode="menu" aria-label="企鹅横版闯关游戏">
-      <canvas id="game" width="1280" height="720" tabindex="0" aria-label="企鹅游戏画面"></canvas>
-      <img id="menu-cover" class="menu-cover" src="./assets/menu/cover.webp" width="1280" height="720" fetchpriority="high" alt="企鹅站在冰块上，远处是冰海与雪山">
-      <div class="vignette"></div>
-      <div class="game-top" id="game-hud" hidden>
-        <div class="chapter"><span class="eyebrow" id="chapter-number">1/5</span><strong id="stage">初见冰海</strong><div class="health-box" id="health-box"><span class="sr-only" id="health-value" aria-hidden="true">100 / 100</span><div class="health-fish-track" id="health-meter" role="progressbar" aria-label="生命值：每条小鱼代表20%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"></div></div></div>
-        <div class="route" role="progressbar" aria-label="本章行进进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="route-nest" role="img" aria-label="起点企鹅巢"></span><div class="route-track" aria-hidden="true"><i id="route-fill"></i><b id="route-dot"></b></div><span id="route-end" class="route-flag" role="img" aria-label="终点旗子"></span></div>
-        <button id="retry" class="glass-button">↻ <span id="retry-label">回起点重试</span></button>
-      </div>
-      <div class="game-bottom" id="bottom-hud" hidden>
-        <div class="movement"><span id="mode-icon" role="img" aria-label="冰面滑行">↝</span><div hidden><small id="mode-label">冰面滑行</small><strong id="speed" hidden aria-hidden="true">0 <em>m/s</em></strong></div></div>
-        <div class="charge-box" hidden aria-hidden="true"><div class="charge-heading"><span id="charge-label">深潜蓄力</span><strong id="charge-value" hidden aria-hidden="true">0%</strong></div><div class="charge-track"><i id="charge-fill"></i></div><small id="charge-hint" hidden></small></div><div id="charge-meter" class="sr-only" role="progressbar" aria-label="深潜能量：企鹅周围的气泡" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
-      </div>
-      <div class="toast" id="toast" role="status" aria-live="polite"></div>
-      <div class="overlay" id="overlay">
-        <div class="intro" id="intro">
-          <span class="intro-kicker"><i></i> 一场出于好奇的旅行</span>
-          <h1>向深蓝潜去，<br>向天空<span>跃起。</span></h1>
-          <p>它主动离开了企鹅群，开始独自旅行。<br>它想去看看，大海的另一边。</p>
-          <button class="primary-button" id="start">Start</button>
-          <p id="loading-status" class="loading-status" role="status" aria-live="polite">正在准备旅程…</p>
-          <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">两段练习与十三章旅程 · 已走过 0 / 15 站</p>
+    <div class="game-layout">
+      <section class="game-frame" data-mode="menu" aria-label="企鹅横版闯关游戏">  
+        <canvas id="game" width="1280" height="720" tabindex="0" aria-label="企鹅游戏画面"></canvas>  
+        <img id="menu-cover" class="menu-cover" src="./assets/menu/cover.webp" width="1280" height="720" fetchpriority="high" alt="企鹅站在冰块上，远处是冰海与雪山">  
+        <div class="vignette"></div>  
+        <div class="game-top" id="game-hud" hidden>  
+          <div class="chapter"><span class="eyebrow" id="chapter-number">1/5</span><strong id="stage">初见冰海</strong><div class="health-box" id="health-box"><span class="sr-only" id="health-value" aria-hidden="true">100 / 100</span><div class="health-fish-track" id="health-meter" role="progressbar" aria-label="生命值：每条小鱼代表20%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"></div></div></div>  
+          <div class="route" role="progressbar" aria-label="本章行进进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="route-nest" role="img" aria-label="起点企鹅巢"></span><div class="route-track" aria-hidden="true"><i id="route-fill"></i><b id="route-dot"></b></div><span id="route-end" class="route-flag" role="img" aria-label="终点旗子"></span></div>  
+          <button id="retry" class="glass-button">↻ <span id="retry-label">回起点重试</span></button>  
+        </div>  
+        <div class="game-bottom" id="bottom-hud" hidden>  
+          <div class="movement"><span id="mode-icon" role="img" aria-label="冰面滑行">↝</span><div hidden><small id="mode-label">冰面滑行</small><strong id="speed" hidden aria-hidden="true">0 <em>m/s</em></strong></div></div>  
+          <div class="charge-box" hidden aria-hidden="true"><div class="charge-heading"><span id="charge-label">深潜蓄力</span><strong id="charge-value" hidden aria-hidden="true">0%</strong></div><div class="charge-track"><i id="charge-fill"></i></div><small id="charge-hint" hidden></small></div><div id="charge-meter" class="sr-only" role="progressbar" aria-label="深潜能量：企鹅周围的气泡" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>  
+        </div>  
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>  
+        <div class="overlay" id="overlay">  
+          <div class="intro" id="intro">  
+            <span class="intro-kicker"><i></i> 一场出于好奇的旅行</span>  
+            <h1>向深蓝潜去，<br>向天空<span>跃起。</span></h1>  
+            <p>它主动离开了企鹅群，开始独自旅行。<br>它想去看看，大海的另一边。</p>  
+            <button class="primary-button" id="start">Start</button>  
+            <p id="loading-status" class="loading-status" role="status" aria-live="polite">正在准备旅程…</p>  
+            <button class="intro-chapters" id="intro-chapters">翻开旅程目录</button><p class="journey-status" id="journey-status">两段练习与十三章旅程 · 已走过 0 / 15 站</p>  
+          </div>  
+          <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden><span class="eyebrow" id="dialog-kicker">TAKE A BREATH</span><h2 id="dialog-title">歇一会儿</h2><p id="dialog-text">冰海会在这里等你。</p><blockquote id="chapter-story" class="chapter-story" hidden></blockquote><div id="chapter-list" class="chapter-list" aria-label="旅程章节" hidden></div><button class="primary-button" id="resume">继续冒险 <span>→</span></button><div class="dialog-actions"><button class="dialog-restart" id="restart">重新开始本关</button><button class="dialog-restart" id="dialog-chapters">选择章节</button><button class="dialog-restart" id="replay">重玩整段旅程</button></div></div>  
+        </div>  
+        <div id="chapter-transition" class="chapter-transition" role="status" aria-live="polite" hidden></div>  
+        <div class="scene-caption" id="scene-caption" hidden><span>南纬 66° · 浮冰海岸</span><i></i><span>去看看大海的另一边</span></div>  
+      </section>
+      <div id="touch-controls" hidden role="group" aria-label="触屏操作">
+        <div id="touch-joystick" role="img" aria-label="移动摇杆，左右移动，水中上下游动">
+          <span class="joystick-thumb"></span>
         </div>
-        <div class="dialog" id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" hidden><span class="eyebrow" id="dialog-kicker">TAKE A BREATH</span><h2 id="dialog-title">歇一会儿</h2><p id="dialog-text">冰海会在这里等你。</p><blockquote id="chapter-story" class="chapter-story" hidden></blockquote><div id="chapter-list" class="chapter-list" aria-label="旅程章节" hidden></div><button class="primary-button" id="resume">继续冒险 <span>→</span></button><div class="dialog-actions"><button class="dialog-restart" id="restart">重新开始本关</button><button class="dialog-restart" id="dialog-chapters">选择章节</button><button class="dialog-restart" id="replay">重玩整段旅程</button></div></div>
+        <button id="touch-action" type="button">跳跃</button>
       </div>
-      <div id="chapter-transition" class="chapter-transition" role="status" aria-live="polite" hidden></div>
-      <div class="scene-caption" id="scene-caption" hidden><span>南纬 66° · 浮冰海岸</span><i></i><span>去看看大海的另一边</span></div>
-    </section>
+    </div>
+    <p id="rotate-hint" hidden>横屏游玩，操作空间更宽。</p>
 
     <footer class="credits">
       <button id="credits-open" class="credits-link" aria-haspopup="dialog">素材致谢</button>

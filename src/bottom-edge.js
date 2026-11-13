@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {ICE_CORNERS} from './ice-corner-data.js';
 export const CORNER_URLS=[
  new URL('../assets/terrain/walls/curved-edges/corner-01.png',import.meta.url).href,
@@ -73,7 +74,7 @@ export function drawCaveRoof(c,art,s,cam){
  // Fill first without the modular slab's inset outline. The side strokes and
  // corner artwork now share the exact same world-space wall boundary.
  c.save();clipIceBottom(c,s,cam);
- const left=Math.max(s.x1,cam.x),right=Math.min(s.x2,cam.x+1280);
+ const left=Math.max(s.x1,cam.x),right=Math.min(s.x2,cam.x+(cam.width??VIEW_WIDTH));
  const top=Math.max(s.y1,cam.y),bottom=Math.min(s.bottom,cam.y+720);
  for(let x=s.x1+Math.floor((left-s.x1)/320)*320;x<right;x+=320)
   for(let y=s.y1+Math.floor((top-s.y1)/320)*320;y<bottom;y+=320)

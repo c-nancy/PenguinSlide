@@ -55,3 +55,28 @@ export function completeChapter(progress,index,count=6){
   const p=normalize(progress,count);if(!Number.isInteger(index)||index<0||index>p.unlocked||index>=count)return p;
   return {...p,unlocked:Math.max(p.unlocked,Math.min(count-1,index+1)),completed:[...new Set([...p.completed,index])].sort((a,b)=>a-b)};
 }
+
+export function openMobileCampaign(storage,count,demo=false){
+  if(!storage)return {storage,progress:loadProgress(storage,count)};
+  const scoped=suffix=>({
+    getItem:key=>storage.getItem(key+suffix),
+    setItem:(key,value)=>storage.setItem(key+suffix,value)
+  });
+  const demoStorage=scoped('.mobile-demo');
+  const campaignStorage=demo?demoStorage:scoped('.mobile');
+  let progress=loadProgress(campaignStorage,count);
+  if(!demo){
+    let saved;
+    try{saved=campaignStorage.getItem(PROGRESS_KEY);}catch{return {storage:campaignStorage,progress};}
+    if(saved===null){
+      const previous=loadProgress(demoStorage,count);
+      progress=previous;
+      if(previous.completed.includes(2)){
+        progress=completeChapter(progress,2,count);
+        if(previous.current===2)progress=selectChapter(progress,3,count);
+      }
+      if(previous.unlocked>0)saveProgress(campaignStorage,progress);
+    }
+  }
+  return {storage:campaignStorage,progress};
+}

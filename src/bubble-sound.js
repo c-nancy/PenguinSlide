@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {createWaterSound} from './water-sound.js';
 export const BUBBLE_CLIPS={
  little:{url:new URL('../assets/audio/se/mixkit-water-bubble-little.wav',import.meta.url).href,offset:.06,volume:.08},
@@ -7,7 +8,7 @@ export const BUBBLE_CLIPS={
 function visibleBurst(item,camera,radius){
  if(!camera)return true;
  const x=item.burstX??item.x,y=item.burstY??item.y;
- return x+radius>=camera.x&&x-radius<=camera.x+1280&&y+radius>=camera.y&&y-radius<=camera.y+720;
+ return x+radius>=camera.x&&x-radius<=camera.x+(camera.width??VIEW_WIDTH)&&y+radius>=camera.y&&y-radius<=camera.y+720;
 }
 export function createBubbleSound(options={}){
  const sound=createWaterSound({...options,clips:BUBBLE_CLIPS,cooldown:.06});

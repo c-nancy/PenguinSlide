@@ -1,4 +1,5 @@
 import {surfaceAt} from './level.js';
+import {VIEW_WIDTH} from './camera.js';
 import {SNOW_CAP} from './snow-cap.js';
 
 export function createPencilEdgeTexture(image,rect){
@@ -69,7 +70,7 @@ export function drawWallPencilEdges(c,art,s,solids,cam){
   const width=6,repeat=320;
   for(const side of ['left','right']){
     const x=(side==='left'?s.x1:s.x2)-cam.x;
-    if(x< -width||x>1280+width)continue;
+    if(x< -width||x>(cam.width??VIEW_WIDTH)+width)continue;
     const anchor=(side==='left'?s.y1:s.y2)+SNOW_CAP.wallStart;
     for(const span of exposedWallSpans(s,solids,side)){
       if(span.end<cam.y||span.start>cam.y+720)continue;
@@ -84,11 +85,11 @@ export function drawWallPencilEdges(c,art,s,solids,cam){
   const bottom=s.bottom-cam.y;
   if(bottom< -width||bottom>720+width)return;
   for(const span of exposedBottomSpans(s,solids)){
-    if(span.end<cam.x||span.start>cam.x+1280)continue;
+    if(span.end<cam.x||span.start>cam.x+(cam.width??VIEW_WIDTH))continue;
     c.save();c.beginPath();c.rect(span.start-cam.x,bottom-width/2,span.end-span.start,width);c.clip();
     c.translate(s.x1-cam.x,bottom);c.rotate(-Math.PI/2);
     const first=s.x1+Math.floor((Math.max(span.start,cam.x)-s.x1)/repeat)*repeat;
-    for(let x=first;x<Math.min(span.end,cam.x+1280);x+=repeat)
+    for(let x=first;x<Math.min(span.end,cam.x+(cam.width??VIEW_WIDTH));x+=repeat)
       c.drawImage(line,0,0,line.width,line.height,-width/2,x-s.x1,width,repeat+.5);
     c.restore();
   }

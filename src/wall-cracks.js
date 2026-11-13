@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {drawSprite} from './art.js';
 
 const variants=[{id:'crack-long',aspect:.22,opacity:.85},{id:'crack-diagonal',aspect:1.23,opacity:.85},{id:'crack-cross',aspect:.70,opacity:.52}];
@@ -34,7 +35,7 @@ export function drawWallCracks(c,art,s,cam){
   c.transform(1,slope,0,1,s.x1-cam.x,s.y1-cam.y);
   for(const crack of wallCrackLayout(s)){
     const worldX=s.x1+crack.x,worldY=s.y1+slope*crack.x+crack.y;
-    if(worldX+crack.h<cam.x||worldX-crack.h>cam.x+1280||worldY+crack.h<cam.y||worldY-crack.h>cam.y+720)continue;
+    if(worldX+crack.h<cam.x||worldX-crack.h>cam.x+(cam.width??VIEW_WIDTH)||worldY+crack.h<cam.y||worldY-crack.h>cam.y+720)continue;
     c.save();c.translate(crack.x,crack.y);c.rotate(crack.angle);c.globalAlpha*=crack.opacity;
     drawSprite(c,art,crack.id,-crack.w/2,-crack.h/2,crack.w,crack.h);c.restore();
   }

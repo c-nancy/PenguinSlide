@@ -1,3 +1,4 @@
+import {VIEW_WIDTH} from './camera.js';
 import {iceBottomAt} from './bottom-edge.js';
 import {CONFIG} from './physics.js';
 import {surfaceAt} from './level.js';
@@ -61,7 +62,7 @@ export function bubbleSprite(b,time){
 }
 export function drawAmbientBubbles(c,art,bubbles,cam,time){
  for(const b of bubbles||[]){
-  const id=bubbleSprite(b,time);if(!id||b.x+b.radius*2<cam.x||b.x-b.radius*2>cam.x+1280||b.y+b.radius*2<cam.y||b.y-b.radius*2>cam.y+720)continue;
+  const id=bubbleSprite(b,time);if(!id||b.x+b.radius*2<cam.x||b.x-b.radius*2>cam.x+(cam.width??VIEW_WIDTH)||b.y+b.radius*2<cam.y||b.y-b.radius*2>cam.y+720)continue;
   const sprite=art.sprites.get(id);if(!sprite)continue;
   const burst=b.phase==='burst',width=b.radius*(burst?3.0:2),height=width*sprite.rect.h/sprite.rect.w;
   c.save();if(burst)c.globalAlpha=Math.min(1,Math.max(0,(.34-(time-b.born))/.10));
