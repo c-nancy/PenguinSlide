@@ -104,6 +104,8 @@
   background: #4f4a423b;
   box-shadow: 0 1px 4px #302d2840;
 }
+#touch-actions { display: flex; align-items: flex-end; gap: 12px; }
+#touch-snowball:disabled { opacity: .4; }
 #touch-joystick {
   position: relative;
   width: clamp(76px, 29vmin, 126px);

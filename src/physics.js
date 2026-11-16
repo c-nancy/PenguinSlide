@@ -9,6 +9,7 @@ import {hasShape,shapeOverlap,shapeSweep} from './shape-collision.js';
 import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
 import {waterCurrentAt} from './currents.js';
 import {collideReefs} from './reefs.js';
+import {prepareSnowAction,advanceSnowballs,canThrowSnowball} from './snowballs.js';
 
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
@@ -27,7 +28,7 @@ const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
 export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
   return {iceWorld:null,platformVX:0,x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
-    facing:1,event:null,waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,checkpointGates:null,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
+    facing:1,event:null,snowAction:null,snowHeld:false,snowballs:[],snowImpacts:[],snowballFlights:[],waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,checkpointGates:null,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
     forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
 export function checkpointsFor(level){return level.checkpoints|| (level.checkpoint?[level.checkpoint]:[]);}
@@ -242,6 +243,7 @@ function stepCore(p,input,level,dt) {
   if(!p.levelId&&level.id)p.levelId=level.id;
   if(p.finished||p.dead)return;
   p.forceSlide=Math.max(0,(p.forceSlide||0)-dt);
+  advanceSnowballs(p,level,dt);
   p.rockEvent=null;p.rockHit=null;
   for(const e of p.rockDebris)e.age=Math.min(.36,e.age+dt);
   p.invulnerable=Math.max(0,p.invulnerable-dt);
@@ -284,6 +286,7 @@ function stepCore(p,input,level,dt) {
       }
     }
   }
+  input=prepareSnowAction(p,input,level,dt);
   const recovering=p.controlLock>0;
   p.controlLock=Math.max(0,p.controlLock-dt);
   const impacts=[];
@@ -304,7 +307,7 @@ function stepCore(p,input,level,dt) {
   if(wasWet)recordDepth(p,level);
   const support=wasGrounded?supportFor(p,level):null;
   const groundMotion=!!support&&!jump&&!wasWet;
-  if(groundMotion)moveOnIce(p,support,ix,dt);
+  if(groundMotion){if(p.snowAction)p.vx=p.vy=0;else moveOnIce(p,support,ix,dt);}
   else {
     p.slideDriveTime=0;p.slideDriveDirection=0;
     if(support&&jump&&!wasWet){
@@ -434,6 +437,7 @@ function stepCore(p,input,level,dt) {
   resolveImpacts(p,p.rockHit?[]:impacts,[...touchingSurfaces(p,level),...impacts.map(hit=>hit.key)]);
   if(wasWet&&p.reaction)restartCharge(p,level);
   applyRockFeedback(p);
+  if(p.snowAction&&(!canThrowSnowball(p,level)||p.reaction))p.snowAction=null;
   if(p.dead)return;
   for(const [index,checkpoint] of checkpointsFor(level).entries()){
     const previous=p.checkpointIndex>=0?p.checkpointIndex:p.checkpoint?0:-1;
@@ -449,7 +453,7 @@ function stepCore(p,input,level,dt) {
 // Unobstructed vertical ascent with the same forces; steering and obstacles change the result.
 export function predictJumpHeight(p,level) {
   if(!p.wet)return Math.max(0,-p.vy)**2/(2*CONFIG.gravity);
-  const ghost={...p};
+  const ghost={...p,snowAction:null,snowballs:[],snowImpacts:[],snowballFlights:[]};
   const open={waterY:level.waterY,bottom:level.bottom,width:1e9,waters:[[-1e9,1e9]],solids:[],goalX:Infinity};
   let breached=false,top=Infinity;
   for(let i=0;i<1200;i++){

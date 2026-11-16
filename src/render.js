@@ -5,6 +5,7 @@ import {drawBreakableWalls} from './ice-gates.js';
 import {drawThin} from './thin-ice.js';
 import {drawSeals} from './seals.js';
 import {drawRings} from './bubble-rings.js';
+import {drawSnowAction,drawSnowballs} from './snowballs.js';
 import {drawAmbientBubbles} from './ambient-bubbles.js';
 import {drawDizzyEffect} from './dizzy-effect.js';
 import {drawImpactEffects} from './impact-effects.js';
@@ -31,7 +32,7 @@ import {drawBirds} from './birds.js';
 import {VIEW_WIDTH,VIEW_HEIGHT as H} from './camera.js';
 export {resetPose} from './character-state.js';
 function polygon(c,s,cam){c.beginPath();c.moveTo(s.x1-cam.x,s.y1-cam.y);c.lineTo(s.x2-cam.x,s.y2-cam.y);c.lineTo(s.x2-cam.x,s.bottom-cam.y);c.lineTo(s.x1-cam.x,s.bottom-cam.y);c.closePath();}
-function terrain(c,art,s,cam,solids,seabed){
+function terrain(c,art,s,cam,solids,seabed,snowCaps){
   const W=cam.width??VIEW_WIDTH;
   if(s.kind==='weak-wall')return;
   if(s.kind==='reef'){
@@ -79,6 +80,11 @@ function terrain(c,art,s,cam,solids,seabed){
   c.save();if(s.roughBottom)clipIceBottom(c,s,cam);drawWallCracks(c,art,s,cam);c.restore();
   drawWallPencilEdges(c,art,s,solids,cam);
   if(s.roughBottom)drawIceBottom(c,art,s,cam);
+  snowCaps.push(s);
+}
+function snowCap(c,art,s,cam,solids){
+  const W=cam.width??VIEW_WIDTH,t=surfaceTransform(s,cam),tile=320;
+  const start=Math.max(0,Math.floor((cam.x-s.x1)/tile)*tile);
   // Preserve the snow's top silhouette instead of clipping it to a straight
   // collision edge. Only the platform's horizontal extent limits this layer.
   const cap=art.snowCapTexture;
@@ -95,6 +101,7 @@ function terrain(c,art,s,cam,solids,seabed){
   }
 }
 function penguin(c,art,p,cam,time,level,menu=false){
+  if(!menu&&drawSnowAction(c,art,p,cam))return;
   const {pose,walkTime,landAge,facing,swimTilt}=characterMotion(p,time,menu);
   const clip=art.character.animations[pose];
   const frame=pose==='landing'?clip.frames[p.grounded?animationFrame(clip,.15+landAge):0]:clip.frames[animationFrame(clip,pose==='walk'?walkTime:time)];
@@ -236,8 +243,16 @@ export function render(c,state,level){
       }c.restore();
     }
     decorations(c,art,level,cam,true);
-    for(const s of level.solids)if(s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids,level.bottom);
+    const snowCaps=[];
+    // Shore outlines stay in front of adjoining floes, including their
+    // shaking and breaking frames which can extend across the shared edge.
+    for(const s of level.solids)if(s.kind==='floe'&&s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids,level.bottom,snowCaps);
+    drawThin(c,art,level,cam);
+    for(const s of level.solids)if(s.kind!=='floe'&&s.x2>cam.x&&s.x1<cam.x+W)terrain(c,art,s,cam,level.solids,level.bottom,snowCaps);
     drawBreakableWalls(c,art,level,cam);
+    // Rounded snow ends overhang the platform. Paint them after every wall
+    // so a taller neighbour cannot cut off that small foreground lip.
+    for(const s of snowCaps)snowCap(c,art,s,cam,level.solids);
     decorations(c,art,level,cam);
     for(const original of level.rocks||[]){
       const rock=rockAppearance(original,p);
@@ -251,11 +266,11 @@ export function render(c,state,level){
     drawSprite(c,art,art.sprites.has('floe-original-pointed')?'floe-original-pointed':'ice-floe',W/2-158,438,310,145);
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
-  if(mode!=='menu')drawThin(c,art,level,cam);
   if(mode!=='menu')drawSeals(c,art,state.seals,cam,time);
   if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
   drawRings(c,art,state.rings,cam);
+  if(mode!=='menu')drawSnowballs(c,art,p,cam);
   drawImpactEffects(c,art,state);
   if(p.wet&&mode==='playing'&&level.depthCharge!==false){
     drawEnergyBubbles(c,remainingCharge(p),p.x-cam.x,p.y-cam.y);

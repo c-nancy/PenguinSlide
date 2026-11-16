@@ -14,7 +14,7 @@ function visible(hint,player){
 }
 
 export function dismissTutorialKey(level,player,code){
-  const key={ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',Space:'up',ArrowDown:'down',KeyS:'down'}[code];
+  const key={ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down'}[code];
   const hints=level.keyHints?.filter(hint=>hint.key===key&&(!hint.onlyWhenVisible||visible(hint,player)))||[];
   if(!hints.length)return;
   let dismissed=dismissedKeys.get(player);

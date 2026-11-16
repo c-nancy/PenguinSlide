@@ -21,6 +21,8 @@ import {createBirds,updateBirds} from './birds.js';
 import {createMusic} from './music.js';
 import {createWaterSound} from './water-sound.js';
 import {loadOnceAfterCover} from './menu-loading.js';
+import {isJumpKey,keyboardAxes} from './controls.js';
+import {canThrowSnowball} from './snowballs.js';
 
 const $=id=>document.getElementById(id);
 const query=new URLSearchParams(location.search);
@@ -34,6 +36,8 @@ const joystickElement=$('touch-joystick');
 const joystick={pointerId:null,x:0,y:0,breached:false};
 const ascentThreshold=-.15;
 const touchAction=$('touch-action');
+const touchSnow=$('touch-snowball');
+let snowballQueued=false;
 let touchActionPointer=null;
 const canvas=$('game'),ctx=canvas.getContext('2d'),frameElement=document.querySelector('.game-frame');
 const updateHealthFish=createHealthHUD($('health-meter'));
@@ -82,7 +86,7 @@ function clearInput(){
   keys.clear();
   resetJoystick();
   resetTouchAction();
-  jumpQueued=false;accumulator=0;
+  jumpQueued=false;snowballQueued=false;accumulator=0;
 }
 function clearEffects(){state.seals=createSeals(level);state.rings=[];waterSound.reset();bubbleSound.reset();healingFeedback.clear();state.birds=createBirds(level);state.ambientBubbles=createAmbientBubbles(movingWorld(p,level));state.particles=[];state.waterEffects=[];state.impactEffects=[];state.shake=0;effectTick=0;}
 function hideNotice(){$('toast').classList.remove('visible');}
@@ -236,8 +240,14 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyR'&&!e.repeat){retry();return;}
   const freshPress=!keys.has(e.code)&&!e.repeat;
   if(freshPress)dismissTutorialKey(level,p,e.code);
-  if(e.code==='Space'&&p.wet){if(freshPress&&emitRing(state.rings,p,characterMotion(p,state.time),state.time))bubbleSound.play('ring');return;}
-  keys.add(e.code);if(freshPress&&['Space','ArrowUp','KeyW'].includes(e.code))jumpQueued=true;
+  if(e.code==='Space'){
+    if(freshPress){
+      if(p.wet){if(emitRing(state.rings,p,characterMotion(p,state.time),state.time))bubbleSound.play('ring');}
+      else snowballQueued=true;
+    }
+    return;
+  }
+  keys.add(e.code);if(freshPress&&isJumpKey(e.code))jumpQueued=true;
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
 function moveJoystick(event){
@@ -271,6 +281,10 @@ for(const type of ['pointerup','pointercancel','lostpointercapture']){
   });
 }
 touchControls.addEventListener('contextmenu',event=>event.preventDefault());
+touchSnow.addEventListener('pointerdown',event=>{
+  if(!touchMode||state.mode!=='playing'||event.button!==0)return;
+  event.preventDefault();snowballQueued=true;
+});
 touchAction.addEventListener('pointerdown',event=>{
   if(!touchMode||state.mode!=='playing'||event.button!==0||touchActionPointer!==null)return;
   event.preventDefault();
@@ -318,16 +332,16 @@ function update(dt){
   state.time+=dt;
   elapsed+=dt;effectTick++;
   const swimY=p.wet?joystick.y:0;
-  const keyboardX=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
-  const keyboardY=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp')||(!p.wet&&keys.has('Space')));
+  const {x:keyboardX,y:keyboardY}=keyboardAxes(keys);
   const input={
     x:keyboardX||joystick.x,
     y:keyboardY||swimY,
     jump:jumpQueued,
+    snowball:snowballQueued,
     surfaceHop:swimY<ascentThreshold&&!joystick.breached&&keyboardY<=0,
     swimAlongInput:p.wet&&!keyboardX&&!keyboardY
   };
-  jumpQueued=false;
+  jumpQueued=false;snowballQueued=false;
   const healthBefore=p.health,previous={x:p.x,y:p.y};
   if(state.seals.some(s=>s.mode==='bite')){
     if(updateSeals(state.seals,p,movingWorld(p,level),dt))retry();
@@ -382,6 +396,8 @@ function update(dt){
 }
 function updateHUD(){
   if(touchMode){
+    touchSnow.hidden=p.wet;
+    touchSnow.disabled=!!p.snowAction||!canThrowSnowball(p,movingWorld(p,level));
     const label=p.wet?'吐气泡':'跳跃';
     if(touchAction.textContent!==label)touchAction.textContent=label;
   }
@@ -397,7 +413,7 @@ function updateHUD(){
   const waiting=p.boosting&&p.y-level.waterY-(p.chargeFloor||0)>CONFIG.maxDepth;
   const assisting=p.wet&&p.boosting&&p.energy>0&&!waiting;
   const horizontal=joystick.x||keys.has('KeyA')||keys.has('KeyD')||keys.has('ArrowLeft')||keys.has('ArrowRight');
-  const vertical=joystick.y||keys.has('KeyW')||keys.has('KeyS')||keys.has('ArrowUp')||keys.has('ArrowDown')||keys.has('Space');
+  const vertical=joystick.y||keys.has('KeyW')||keys.has('KeyS')||keys.has('ArrowUp')||keys.has('ArrowDown');
   const passive=p.wet&&!horizontal&&!vertical;
   $('charge-label').textContent=assisting?'深潜能量 · 助推中':q>=.995?'深潜能量 · 已满':'深潜能量';
   const groundPose=characterMotion(p,state.time,state.mode==='menu').pose;

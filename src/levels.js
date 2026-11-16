@@ -6,6 +6,7 @@ import {balanceWaterLevels} from './level-balance-water.js';
 import {balanceThinLevels} from './level-balance-thin.js';
 import {balanceReefLevels} from './level-balance-reefs.js';
 import {RETURNING_TIDE_LEVEL} from './returning-tide-level.js';
+import {BENEATH_THIN_ICE_LEVEL} from './beneath-thin-ice-level.js';
 
 const block=(x1,x2,y1,y2=y1,kind='shore',bottom=1280)=>({x1,x2,y1,y2,bottom,kind});
 function chapter(number,title,theme,solids,waters,checkpointXs,goalX,story,extra={}){
@@ -253,6 +254,7 @@ STORY_LEVELS.push(chapter(13,'跃入冰隙','cave',[
  goal:{x:14280,y:250,kind:'lighthouse'}}));
 STORY_LEVELS.find(level=>level.id==='chapter-13').goal.kind='shore';
 STORY_LEVELS.push(RETURNING_TIDE_LEVEL);
+STORY_LEVELS.push(BENEATH_THIN_ICE_LEVEL);
 // Assign existing silhouettes before adding new floes. Later chapters retain
 // their original artwork even when another chapter gains a receiving platform.
 const floeVariants=['floe-original-pointed','floe-offset','floe-original-flat','floe-double-point','floe-shallow'];
@@ -289,7 +291,7 @@ const birdPerches=[
   [[250,'skua',46]]
 ];
 STORY_LEVELS.forEach((level,index)=>{
-  if(level.id==='chapter-14'){level.birds=[];return;}
+  if(['chapter-14','chapter-15'].includes(level.id)){level.birds=[];return;}
   level.birds=placeBirds(level,birdPerches[index]||[[250,'petrel'],[7200,'albatross']]);
 });
 

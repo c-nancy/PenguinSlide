@@ -332,6 +332,70 @@
         0.546875,
         0.1015625
       ]
+    },
+    "snowball": {
+      "label": "捡雪投掷",
+      "loop": false,
+      "frames": [
+        {
+          "file": "snowball/frame-01.png",
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            20,
+            25,
+            734,
+            483
+          ]
+        },
+        {
+          "file": "snowball/frame-02.png",
+          "x": 768,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            254,
+            56,
+            283,
+            407
+          ]
+        },
+        {
+          "file": "snowball/frame-03.png",
+          "x": 1536,
+          "y": 0,
+          "width": 768,
+          "height": 512,
+          "contentBounds": [
+            261,
+            64,
+            490,
+            401
+          ]
+        }
+      ],
+      "sequence": [
+        0,
+        1,
+        2
+      ],
+      "durationsMs": [
+        380,
+        240,
+        220
+      ],
+      "spritesheet": "snowball/spritesheet.png",
+      "pivotPixels": [
+        420,
+        460
+      ],
+      "unityPivot": [
+        0.546875,
+        0.1015625
+      ]
     }
   },
   "texture": "hand-drawn-graphite-pencil",

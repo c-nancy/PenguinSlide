@@ -10,6 +10,21 @@ export function createBirds(level){
       slope:s?(s.y2-s.y1)/(s.x2-s.x1):0};
   });
 }
+// Use the same 140px neighbourhood and 100px vertical limit as a penguin
+// approach, sweeping the actual travelled segment so fast throws cannot skip it.
+function snowballNearBird(b,path){
+ const dx=path.x2-path.x1,dy=path.y2-path.y1;
+ let first=0,last=1;
+ if(dy===0){if(Math.abs(path.y1-b.y)>100)return false;}
+ else{
+  const a=(b.y-100-path.y1)/dy,c=(b.y+100-path.y1)/dy;
+  first=Math.max(0,Math.min(a,c));last=Math.min(1,Math.max(a,c));
+  if(first>last)return false;
+ }
+ const length=dx*dx+dy*dy;
+ const t=length?Math.max(first,Math.min(last,((b.x-path.x1)*dx+(b.y-path.y1)*dy)/length)):0;
+ return Math.hypot(path.x1+dx*t-b.x,path.y1+dy*t-b.y)<=140;
+}
 export function updateBirds(birds,p,dt,world=null){
   for(const b of birds){
     if(b.phase==='gone')continue;
@@ -21,8 +36,12 @@ export function updateBirds(birds,p,dt,world=null){
         losingPerch=!s||['broken','restoring'].includes(s.phase);
         if(s){b.x=b.homeX=(s.x1+s.x2)/2;b.y=b.homeY=surfaceAt(s,b.x);b.slope=(s.y2-s.y1)/(s.x2-s.x1);}
       }
-      if(!losingPerch&&(Math.abs(p.y+22-b.y)>100||Math.hypot(p.x-b.x,p.y+22-b.y)>140))continue;
-      b.phase='flying';b.direction=p.x>b.x?-1:1;
+      const penguinNear=Math.abs(p.y+22-b.y)<=100&&Math.hypot(p.x-b.x,p.y+22-b.y)<=140;
+      const flight=(p.snowballFlights||[]).find(path=>snowballNearBird(b,path));
+      const ball=!flight&&(p.snowballs||[]).find(s=>snowballNearBird(b,{x1:s.x,y1:s.y,x2:s.x,y2:s.y}));
+      if(!losingPerch&&!penguinNear&&!flight&&!ball)continue;
+      const threatX=penguinNear?p.x:flight?flight.x1:ball?ball.x:p.x;
+      b.phase='flying';b.direction=threatX>b.x?-1:1;
     }
     b.age+=dt;
     b.x=b.homeX+b.direction*(60*b.age+65*b.age*b.age);

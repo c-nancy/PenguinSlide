@@ -5,6 +5,7 @@ import {THIN_URLS} from './thin-ice.js';
 import {WALL_BREAK_URLS} from './ice-gates.js';
 import {SEAL_URLS} from './seals.js';
 import {RING_URLS} from './bubble-rings.js';
+import {SNOWBALL_URL,SNOWBALL_IMPACT_URLS} from './snowballs.js';
 import {createIceWallTexture} from './ice-wall.js';
 import {createSnowCapTexture} from './snow-cap.js';
 import {createPencilEdgeTexture} from './pencil-edge.js';
@@ -38,13 +39,13 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const [environment,character,campaign,stones,floes,items,stoneAnimations,birds]=await Promise.all([json(ENV+'manifest.json'),json(CHARACTER+'manifest.json'),json(CAMPAIGN+'manifest.json'),json(STONES+'manifest.json'),json(FLOES+'manifest.json'),json(ITEMS+'manifest.json'),json(STONE_ANIMATIONS+'manifest.json'),json(BIRDS+'manifest.json')]);
   const images=new Map();
   const files=[...items.sprites.map(item=>ITEMS+item.file),...floes.sprites.map(item=>FLOES+item.file),...stones.sprites.map(item=>STONES+item.file),...environment.backgrounds.map(item=>new URL(item.file,ENV).href),...environment.sprites.map(item=>new URL(item.file,ENV).href),...campaign.backgrounds.map(item=>CAMPAIGN+item.file),...campaign.sprites.map(item=>CAMPAIGN+item.file),...Object.values(character.animations).map(clip=>CHARACTER+clip.spritesheet)];
-  files.push(...CORNER_URLS,...BOTTOM_EDGE_URLS,...REEF_URLS,...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
+  files.push(...CORNER_URLS,...BOTTOM_EDGE_URLS,...REEF_URLS,...WALL_BREAK_URLS,...THIN_URLS,...SEAL_URLS,...RING_URLS,SNOWBALL_URL,...SNOWBALL_IMPACT_URLS,TUTORIAL_KEYS_URL,...stoneAnimations.sprites.map(item=>STONE_ANIMATIONS+item.file),...birds.sprites.map(item=>BIRDS+item.file));
   const loadImage=createImageQueue(url=>new Promise((resolve,reject)=>{
     const image=new Image();image.onload=()=>{try{images.set(url,releaseImageSource(url,image));resolve();}catch(error){reject(error);}};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
   }),3);
   const backgroundMap=new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]);
   const optional=[...environment.sprites.map(s=>({...s,url:new URL(s.file,ENV).href})),...floes.sprites.map(s=>({...s,url:FLOES+s.file})),...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
-  const common=[...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS];
+  const common=[...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS,SNOWBALL_URL,...SNOWBALL_IMPACT_URLS];
   const sprites=new Map([...items.sprites.map(item=>[item.id,{...item,url:ITEMS+item.file}]),...floes.sprites.map(item=>[item.id,{...item,url:FLOES+item.file}]),...stones.sprites.map(item=>[item.id,{...item,url:STONES+item.file}]),...environment.sprites.map(item=>[item.id,{...item,url:new URL(item.file,ENV).href}]),...campaign.sprites.map(item=>[item.id,{...item,url:CAMPAIGN+item.file}])]);
   for(const item of stoneAnimations.sprites)sprites.set(item.id,{...item,url:STONE_ANIMATIONS+item.file});
   for(const item of birds.sprites)sprites.set(item.id,{...item,url:BIRDS+item.file});

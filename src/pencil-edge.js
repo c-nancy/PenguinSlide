@@ -24,9 +24,9 @@ export function exposedWallSpans(s,solids,side){
   const left=side==='left',x=left?s.x1:s.x2,top=(left?s.y1:s.y2)+SNOW_CAP.wallStart;
   let spans=top<s.bottom?[{start:top,end:s.bottom}]:[];
   for(const other of solids){
-    // Reefs have transparent, irregular silhouettes; their bounding rectangle
+    // Reefs and floes have transparent, irregular silhouettes; their bounds
     // is not a neighbouring ice wall and must not hide the shore's outline.
-    if(other===s||other.kind==='reef')continue;
+    if(other===s||other.kind==='reef'||other.kind==='floe')continue;
     const touches=left?other.x1<x-.01&&other.x2>=x-.01:other.x2>x+.01&&other.x1<=x+.01;
     if(!touches)continue;
     const a=surfaceAt(other,x),b=other.bottom;
