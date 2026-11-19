@@ -2,6 +2,7 @@ import {createBubbleSound} from './bubble-sound.js';
 import {createSeals,updateSeals,sealEffects} from './seals.js';
 import {movingWorld} from './moving-ice.js';
 import {emitRing,updateRings} from './bubble-rings.js';
+import {repelJellyfishWithRing} from './jellyfish.js';
 import { LEVELS as ALL_LEVELS } from './levels.js';
 import { CONFIG, createPlayer, step, resetPlayer, remainingCharge } from './physics.js';
 import { render, resetPose } from './render.js';
@@ -356,7 +357,8 @@ function update(dt){
   if(input.surfaceHop&&(p.surfaceJumped||p.event==='breach'))joystick.breached=true;
   if(updateSeals(state.seals,p,movingWorld(p,level),dt)){resetPlayer(p,level);resetPose(p);clearEffects();state.cam.y=cameraY(level,p);return;}
   sealEffects(state.seals,state.rings,state.ambientBubbles,state.time);
-  updateRings(state.rings,movingWorld(p,level),dt,state.ambientBubbles,state.time);
+  const ringWorld=movingWorld(p,level);
+  updateRings(state.rings,ringWorld,dt,state.ambientBubbles,state.time,(ring,x,y)=>repelJellyfishWithRing(p,ringWorld,ring,x,y));
   updateAmbientBubbles(state.ambientBubbles,p,previous,state.time,movingWorld(p,level));
   bubbleSound.update(state.ambientBubbles,state.rings,state.cam);
   updateBirds(state.birds,p,dt,movingWorld(p,level));

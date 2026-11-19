@@ -4,6 +4,7 @@ import {drawReef} from './reefs.js';
 import {drawBreakableWalls} from './ice-gates.js';
 import {drawThin} from './thin-ice.js';
 import {drawSeals} from './seals.js';
+import {drawJellyfish} from './jellyfish.js';
 import {drawRings} from './bubble-rings.js';
 import {drawSnowAction,drawSnowballs} from './snowballs.js';
 import {drawAmbientBubbles} from './ambient-bubbles.js';
@@ -267,6 +268,7 @@ export function render(c,state,level){
   }
   for(const effect of state.waterEffects||[]){const age=time-effect.born;if(age>=0&&age<.6){c.save();c.globalAlpha=1-age/.6;drawSprite(c,art,effect.kind,effect.x-cam.x-42,sy-64-age*12,84,75);c.restore();}}
   if(mode!=='menu')drawSeals(c,art,state.seals,cam,time);
+  if(mode!=='menu')drawJellyfish(c,art,level,p,cam);
   if(mode!=='menu')drawBirds(c,art,state.birds||[],cam);
   penguin(c,art,p,cam,time,level,mode==='menu');
   drawRings(c,art,state.rings,cam);

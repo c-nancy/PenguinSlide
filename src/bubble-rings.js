@@ -30,7 +30,7 @@ function blocked(level,x,y,r){
  if(box.top<=level.waterY||box.bottom>=level.bottom)return true;
  return level.solids.some(s=>hasShape(s)?shapeOverlap(s,box):box.right>s.x1&&box.left<s.x2&&box.bottom>surfaceAt(s,Math.max(s.x1,Math.min(s.x2,x)))&&box.top<iceBottomAt(s,x));
 }
-export function updateRings(rings,level,dt,bubbles=[],time=0){
+export function updateRings(rings,level,dt,bubbles=[],time=0,onContact=null){
  for(const r of rings){
   if(r.broken!==null){r.broken+=dt;continue;}
   r.age+=dt;
@@ -39,6 +39,7 @@ export function updateRings(rings,level,dt,bubbles=[],time=0){
   for(let i=0;i<n;i++){
    const x=r.x+dx/n,y=r.y+dy/n;
    if(blocked(level,x,y,r)){r.broken=0;break;}
+   if(onContact?.(r,x,y)){r.x=x;r.y=y;r.broken=0;break;}
    const box=ringBounds(r,x,y);
    const bubble=bubbles.find(b=>{if(b.phase!=='idle')return false;const pos=bubblePosition(b,time),cx=Math.max(box.left,Math.min(box.right,pos.x)),cy=Math.max(box.top,Math.min(box.bottom,pos.y));return (pos.x-cx)**2+(pos.y-cy)**2<=b.radius**2;});
    if(bubble){const pos=bubblePosition(bubble,time);bubble.burstX=pos.x;bubble.burstY=pos.y;bubble.phase='burst';bubble.born=time;r.x=x;r.y=y;r.broken=0;break;}

@@ -4,6 +4,7 @@ import {REEF_URLS} from './reefs.js';
 import {THIN_URLS} from './thin-ice.js';
 import {WALL_BREAK_URLS} from './ice-gates.js';
 import {SEAL_URLS} from './seals.js';
+import {JELLYFISH_URLS} from './jellyfish.js';
 import {RING_URLS} from './bubble-rings.js';
 import {SNOWBALL_URL,SNOWBALL_IMPACT_URLS} from './snowballs.js';
 import {createIceWallTexture} from './ice-wall.js';
@@ -43,6 +44,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
   const loadImage=createImageQueue(url=>new Promise((resolve,reject)=>{
     const image=new Image();image.onload=()=>{try{images.set(url,releaseImageSource(url,image));resolve();}catch(error){reject(error);}};image.onerror=()=>reject(Error(`无法载入图片 ${url}`));image.src=releaseImageURL(url);
   }),3);
+  files.push(...JELLYFISH_URLS);
   const backgroundMap=new Map([...environment.backgrounds.map(item=>[item.id,new URL(item.file,ENV).href]),...campaign.backgrounds.map(item=>[item.id,CAMPAIGN+item.file])]);
   const optional=[...environment.sprites.map(s=>({...s,url:new URL(s.file,ENV).href})),...floes.sprites.map(s=>({...s,url:FLOES+s.file})),...items.sprites.map(s=>({...s,url:ITEMS+s.file})),...stones.sprites.map(s=>({...s,url:STONES+s.file})),...campaign.sprites.map(s=>({...s,url:CAMPAIGN+s.file})),...stoneAnimations.sprites.map(s=>({...s,url:STONE_ANIMATIONS+s.file})),...birds.sprites.map(s=>({...s,url:BIRDS+s.file}))];
   const common=[...Object.values(character.animations).map(c=>CHARACTER+c.spritesheet),...RING_URLS,SNOWBALL_URL,...SNOWBALL_IMPACT_URLS];
@@ -68,6 +70,7 @@ export async function loadArt(initialLevel,onProgress=()=>{}){
     const needed=[...common,...themes.map(t=>backgroundMap.get(t)).filter(Boolean),...optional.filter(s=>ids.has(s.id)).map(s=>s.url)];
     if(level.thinIce?.length||level.solids?.some(s=>s.thin))needed.push(...THIN_URLS);
     if(level.seals?.length)needed.push(...SEAL_URLS);
+    if(level.jellyfish?.length)needed.push(...JELLYFISH_URLS);
     if(level.gates?.length)needed.push(...WALL_BREAK_URLS);
     if(level.solids?.some(s=>s.kind==='reef'))needed.push(...REEF_URLS);
     if(level.solids?.some(s=>s.kind==='tunnel'||s.roughBottom))needed.push(...BOTTOM_EDGE_URLS,...(level.solids.some(s=>s.caveRoof)?CORNER_URLS:[]));

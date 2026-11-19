@@ -10,6 +10,7 @@ import {collideRocks,isSliding,applyRockFeedback} from './rocks.js';
 import {waterCurrentAt} from './currents.js';
 import {collideReefs} from './reefs.js';
 import {prepareSnowAction,advanceSnowballs,canThrowSnowball} from './snowballs.js';
+import {advanceJellyfish} from './jellyfish.js';
 
 // Distances are world pixels; velocities are pixels/second. Mass is normalized to 1.
 export const CONFIG = Object.freeze({
@@ -27,7 +28,7 @@ const depthForce=depth=>.4+chargeForDepth(depth);
 const storedWork=depth=>depth*CONFIG.energyPerDepth*depthForce(depth);
 export const remainingCharge = p => clamp(p.energy/storedWork(CONFIG.maxDepth),0,1);
 export function createPlayer(x=150,y=238) {
-  return {iceWorld:null,platformVX:0,x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
+  return {jellyTime:0,jellyCooldown:0,jellyRepels:[],iceWorld:null,platformVX:0,x,y,vx:0,vy:0,wet:false,grounded:false,maxDepth:0,energy:0,boosting:false,
     facing:1,event:null,snowAction:null,snowHeld:false,snowballs:[],snowImpacts:[],snowballFlights:[],waterSoundEvent:null,waterEntrySounded:false,waterExitSounded:false,checkpoint:false,checkpointIndex:-1,checkpointGates:null,levelId:null,finished:false,lastCharge:0,surfaceJumped:false,
     forceSlide:0,sliding:false,slideDriveTime:0,slideDriveDirection:0,brokenRocks:[],rockContacts:[],rockDebris:[],rockPasses:[],rockBounce:false,rockTrip:false,chargeFloor:0,rechargePending:false,...healthState()};
 }
@@ -203,6 +204,12 @@ function moveFreely(p,ix,iy,immersion,depth,dt,flowX=0,swimAlongInput=false) {
   }
 }
 export function step(p,input,level,dt){
+  if(p.finished||p.dead)return;
+  const previous={x:p.x,y:p.y};
+  stepWorld(p,input,level,dt);
+  if(level.jellyfish?.length)advanceJellyfish(p,level,previous,dt);
+}
+function stepWorld(p,input,level,dt){
   if(!level.movingIce?.length&&!level.thinIce?.length&&!level.tide&&!level.gates)return stepCore(p,input,level,dt);
   if(p.finished||p.dead)return;
   const world=movingWorld(p,level),ride=riddenIce(p,world),oldVX=ride?.vx||0;

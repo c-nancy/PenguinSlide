@@ -3,7 +3,7 @@ const block=(id,x1,x2,y,kind='shore',bottom=1280)=>({id,x1,x2,y1:y,y2:y,bottom,k
 // A shallow pool leads to a small exposed platform, then an open deep pool.
 // Only the short section beside the high shore is covered with breakable ice.
 export const BENEATH_THIN_ICE_LEVEL={
- id:'chapter-15',chapter:15,title:'薄冰之下',theme:'cave',
+ id:'chapter-15',chapter:15,title:'薄冰之后',theme:'cave',
  width:4700,waterY:380,bottom:1040,start:{x:150,y:328},
  overviewY:50,cameraLead:100,
  solids:[

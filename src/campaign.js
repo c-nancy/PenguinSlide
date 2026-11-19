@@ -31,6 +31,7 @@ export function loadProgress(storage,count=6){
       const shift=n=>n>=12?n+1:n;
       value={...value,reefSplit:true,current:shift(value.current),unlocked:shift(value.unlocked),completed:(value.completed||[]).map(shift)};
     }
+    if(count>=18&&value?.version===4&&value.completed?.includes(16)&&value.unlocked===16)value={...value,unlocked:17};
     if(count>=17&&value?.version===4&&value.completed?.includes(15)&&value.unlocked===15)value={...value,unlocked:16};
     if(count>=16&&value?.version===4&&value.completed?.includes(14)&&value.unlocked===14)value={...value,unlocked:15};
     if(count>=15&&value?.version===4&&value.completed?.includes(13)&&value.unlocked===13)value={...value,unlocked:14};
